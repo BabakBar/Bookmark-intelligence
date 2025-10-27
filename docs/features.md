@@ -6,6 +6,12 @@
 
 ## Table of Contents
 
+- [Phase 0: Bootstrap & Import](#phase-0-bootstrap--import-prerequisite)
+  - [Bookmark Import from Browser](#01-bookmark-import-from-browser)
+  - [Batch AI Processing](#02-batch-ai-processing)
+  - [Automatic Clustering](#03-automatic-clustering)
+  - [Project Suggestions](#04-project-suggestions)
+  - [Web Dashboard for Validation](#05-web-dashboard-for-validation)
 - [P0 Features (MVP Critical)](#p0-features-mvp-critical)
   - [Context-Aware Surfacing](#21-context-aware-surfacing)
   - [Intelligent Clustering & Auto-Tagging](#22-intelligent-clustering--auto-tagging)
@@ -18,6 +24,265 @@
 - [P2 Features (Future)](#p2-features-future)
   - [Cross-Project Search](#28-cross-project-search)
 - [User Interface Design](#user-interface-design)
+
+---
+
+## Phase 0: Bootstrap & Import (Prerequisite)
+
+**Critical First Step:** No user starts with zero bookmarks. Phase 0 handles the cold-start problem by importing and organizing existing bookmark collections before building the browser extension. This phase proves the AI organization works correctly and delivers immediate value.
+
+### 0.1 Bookmark Import from Browser
+
+**Priority:** Phase 0 (Must complete before MVP)
+
+**Description:**
+Users export their existing bookmarks from their browser as an HTML file and upload it to the web interface. The system parses the HTML and imports all bookmarks with zero data loss, preserving URLs, titles, and original folder structure.
+
+**User Flow:**
+1. User navigates to Chrome → Bookmarks → Bookmark Manager → ⋮ → Export bookmarks
+2. Browser saves `bookmarks_27_10_2025.html` file with 800 bookmarks
+3. User opens BookmarkAI web interface at `app.bookmarkai.local`
+4. User clicks "Import Bookmarks" and selects the HTML file
+5. System parses HTML using `bookmarks-parser` library (supports Chrome/Firefox/Safari)
+6. Progress bar shows "Importing: 342 of 800 bookmarks (43%)"
+7. Import completes: "Successfully imported 800 bookmarks"
+8. User sees list of all imported bookmarks in the web interface
+
+**Technical Requirements:**
+- HTML parser supports Netscape-Bookmark-file format (Chrome/Firefox standard)
+- Handle duplicate URLs: Keep first occurrence, flag duplicates
+- Preserve folder structure as preliminary tags
+- Import status tracking with progress percentage
+- Error handling for malformed HTML or invalid URLs
+- Maximum file size: 50MB (~50,000 bookmarks)
+
+**Success Metrics:**
+- 100% import success rate (zero data loss)
+- Processing time: <30 seconds for 1000 bookmarks
+- Accurate URL and title extraction for all supported browsers
+
+---
+
+### 0.2 Batch AI Processing
+
+**Priority:** Phase 0 (Must complete before MVP)
+
+**Description:**
+After import, the system automatically processes all bookmarks in batch mode to generate embeddings, AI tags, and summaries. Uses OpenAI Batch API for 50% cost savings and Claude 3.5 Haiku for fast, cost-effective analysis.
+
+**User Flow:**
+1. After import completes, user clicks "Start AI Processing"
+2. System shows cost estimate: "$42 for 800 bookmarks (OpenAI: $8, Claude: $34)"
+3. User confirms and processing begins
+4. Progress dashboard shows:
+   - "Generating embeddings: 456/800 (57%)"
+   - "Creating tags & summaries: 234/800 (29%)"
+   - "Estimated completion: 18 hours"
+5. User receives email notification when complete
+6. User reviews results: Every bookmark now has 3-7 tags and a 2-3 sentence summary
+
+**Technical Requirements:**
+- OpenAI Batch API integration (50% cost savings vs real-time)
+- Claude 3.5 Haiku integration for tag generation
+- Batch size: Process 100 bookmarks per API request
+- Error handling: Mark failed bookmarks, continue processing others
+- Retry logic for transient API failures
+- Cost tracking and reporting
+- Processing time: <24 hours for 1000 bookmarks
+
+**Tag Generation Prompt:**
+```
+Analyze this bookmark and generate 3-7 semantic tags:
+
+URL: {url}
+Title: {title}
+Content preview: {first_500_chars}
+
+Return tags as JSON: {"tags": ["tag1", "tag2", ...], "content_type": "tutorial|documentation|article|video|tool", "summary": "2-3 sentence summary"}
+```
+
+**Success Metrics:**
+- 100% of successfully imported bookmarks receive embeddings
+- 95%+ of bookmarks receive AI-generated tags and summaries
+- Processing cost: <$0.06 per bookmark
+- 85%+ of AI-generated tags accepted without manual editing
+
+---
+
+### 0.3 Automatic Clustering
+
+**Priority:** Phase 0 (Must complete before MVP)
+
+**Description:**
+After AI processing completes, the system automatically groups related bookmarks into semantic clusters using MiniBatchKMeans clustering on the embedding vectors. Generates descriptive cluster names using AI.
+
+**User Flow:**
+1. After AI processing, system automatically runs clustering
+2. Algorithm creates 12 clusters from 800 bookmarks
+3. User reviews suggested clusters in web interface:
+   - "Docker & Containers" (34 bookmarks)
+   - "Infrastructure as Code" (23 bookmarks: Terraform, Ansible, Pulumi)
+   - "React Best Practices" (18 bookmarks)
+   - "Kubernetes & Orchestration" (45 bookmarks)
+   - "Python Web Development" (29 bookmarks)
+   - ...and 7 more clusters
+4. User can rename clusters (e.g., "Cloud Stuff" → "AWS Architecture")
+5. User can merge similar clusters (e.g., "Docker" + "Containers" → "Docker & Containers")
+6. User can view bookmarks in each cluster to verify accuracy
+
+**Technical Requirements:**
+- MiniBatchKMeans clustering (scalable for large datasets)
+- Cosine similarity distance metric (better for text embeddings)
+- Optimal K detection using elbow method (8-15 clusters typical)
+- L2 normalization of embeddings before clustering
+- Minimum cluster size: 3 bookmarks
+- Cluster name generation using Claude based on representative keywords
+- Silhouette score calculation for cluster quality assessment
+
+**Clustering Algorithm:**
+```python
+from sklearn.cluster import MiniBatchKMeans
+from sklearn.preprocessing import normalize
+
+# Normalize embeddings (L2-norm = 1)
+embeddings_normalized = normalize(embeddings, norm='l2')
+
+# Find optimal K using elbow method
+silhouette_scores = []
+for k in range(8, 16):
+    kmeans = MiniBatchKMeans(n_clusters=k, random_state=42)
+    labels = kmeans.fit_predict(embeddings_normalized)
+    score = silhouette_score(embeddings_normalized, labels, metric='cosine')
+    silhouette_scores.append((k, score))
+
+optimal_k = max(silhouette_scores, key=lambda x: x[1])[0]
+
+# Final clustering
+kmeans = MiniBatchKMeans(n_clusters=optimal_k, random_state=42)
+cluster_labels = kmeans.fit_predict(embeddings_normalized)
+```
+
+**Success Metrics:**
+- 90%+ of bookmarks assigned to a cluster
+- Clustering accuracy: 80%+ (measured by user corrections)
+- Silhouette score: >0.3 (indicates decent cluster separation)
+- Cluster coverage: 8-15 clusters for 500-1000 bookmarks
+
+---
+
+### 0.4 Project Suggestions
+
+**Priority:** Phase 0 (Must complete before MVP)
+
+**Description:**
+Based on the created clusters, the system suggests 3-5 initial projects (high-level workspaces) that represent major topic areas. Users can accept, rename, or reject suggestions.
+
+**User Flow:**
+1. After clustering completes, system analyzes cluster patterns
+2. System suggests 5 projects based on bookmark distribution:
+   - "FabrikTakt Work" (187 bookmarks: Grafana, Docker, AWS, infrastructure)
+   - "Personal Learning" (134 bookmarks: tutorials, courses, documentation)
+   - "Web Development" (215 bookmarks: React, TypeScript, frontend)
+   - "German Language" (89 bookmarks: Duolingo, grammar resources)
+   - "Health & Fitness" (78 bookmarks: workout plans, nutrition)
+3. User reviews project suggestions
+4. User renames "Personal Learning" → "Tech Learning"
+5. User rejects "Health & Fitness" (not relevant)
+6. User accepts remaining 4 projects
+7. System automatically assigns bookmarks to accepted projects based on cluster membership
+
+**Technical Requirements:**
+- Project suggestion based on cluster size and topic diversity
+- Project embedding: Average of all member bookmark embeddings
+- Suggest 3-5 projects covering 80%+ of all bookmarks
+- Project name generation using Claude based on cluster themes
+- User can manually adjust bookmark-to-project assignments
+- Unassigned bookmarks remain in "Uncategorized" project
+
+**Project Suggestion Algorithm:**
+```python
+def suggest_projects(clusters, min_projects=3, max_projects=5):
+    # Group clusters by topic similarity
+    cluster_groups = []
+    for cluster in clusters:
+        # Find existing group with similar theme
+        matched = False
+        for group in cluster_groups:
+            similarity = cosine_similarity(cluster.embedding, group.embedding)
+            if similarity > 0.75:
+                group.add_cluster(cluster)
+                matched = True
+                break
+
+        if not matched:
+            cluster_groups.append(ProjectGroup([cluster]))
+
+    # Generate project suggestions from groups
+    projects = []
+    for group in sorted(cluster_groups, key=lambda g: g.size, reverse=True)[:max_projects]:
+        project_name = generate_project_name(group.clusters)
+        projects.append({
+            "name": project_name,
+            "bookmark_count": group.size,
+            "clusters": [c.name for c in group.clusters],
+            "keywords": group.representative_keywords
+        })
+
+    return projects
+```
+
+**Success Metrics:**
+- Suggested projects cover 80%+ of all bookmarks
+- 70%+ of project suggestions accepted by users
+- Project names are descriptive and meaningful
+- Average 3-5 projects suggested per user
+
+---
+
+### 0.5 Web Dashboard for Validation
+
+**Priority:** Phase 0 (Must complete before MVP)
+
+**Description:**
+Simple web interface (not the full extension) for browsing imported bookmarks, viewing clusters and projects, searching, and validating that the AI organization worked correctly before proceeding to Phase 1.
+
+**User Flow:**
+1. User logs into web dashboard at `app.bookmarkai.local`
+2. Dashboard shows summary:
+   - "800 bookmarks imported and organized"
+   - "12 clusters created"
+   - "4 projects suggested and accepted"
+   - "Processing cost: $42"
+3. User can:
+   - Browse all bookmarks (grid or list view)
+   - Search by keyword: "kubernetes" returns 45 results
+   - Filter by cluster: View "Docker & Containers" (34 bookmarks)
+   - Filter by project: View "FabrikTakt Work" (187 bookmarks)
+   - Edit tags manually if AI got them wrong
+   - Rename clusters or projects
+   - View bookmark details (URL, title, tags, summary, cluster, project)
+4. User validates organization is correct before committing to Phase 1 extension development
+
+**UI Components:**
+- **Dashboard Page:** Summary stats, recent imports, processing status
+- **Bookmarks Page:** Grid/list view, search, filters (cluster, project, tags)
+- **Clusters Page:** List of all clusters with bookmark counts, edit/merge/delete
+- **Projects Page:** List of all projects with bookmark counts, manage assignments
+- **Settings Page:** API keys, processing configuration, user profile
+
+**Technical Requirements:**
+- Simple React web app (not the extension)
+- REST API integration with FastAPI backend
+- Search: Full-text search across titles, URLs, tags, summaries
+- Filters: Multi-select (cluster, project, tags)
+- Pagination: 50 bookmarks per page
+- Mobile-responsive design (Tailwind CSS)
+
+**Success Metrics:**
+- Page load time: <2 seconds for 1000 bookmarks
+- Search results: <500ms
+- Users can validate organization in <1 hour
+- 90%+ of users proceed to Phase 1 after validation
 
 ---
 
@@ -67,7 +332,7 @@ AI automatically analyzes bookmark content to generate semantic tags and cluster
 
 **User Flow:**
 1. User saves article: "Getting Started with Terraform on AWS"
-2. Real-time: Claude generates tags in 2-3 seconds
+2. Real-time: chatgpt generates tags in 2-3 seconds
    - Tags: `#terraform`, `#aws`, `#infrastructure-as-code`, `#devops`
    - Content type: `tutorial`
    - Difficulty: `beginner`
@@ -175,7 +440,7 @@ Project {
 **Priority:** P1 (Post-MVP)
 
 **Description:**
-Natural language search interface allowing users to query their bookmark library conversationally. Powered by semantic search + Claude for query understanding.
+Natural language search interface allowing users to query their bookmark library conversationally. Powered by semantic search + chatgpt for query understanding.
 
 **Example Queries:**
 ```
@@ -193,8 +458,8 @@ System: [Generates comparison table of 4 tutorials]
 ```
 
 **Technical Architecture:**
-1. User query → Claude API for intent extraction
-2. Claude returns structured search parameters:
+1. User query → chatgpt API for intent extraction
+2. chatgpt returns structured search parameters:
    ```json
    {
      "keywords": ["docker", "tutorial"],
@@ -207,7 +472,7 @@ System: [Generates comparison table of 4 tutorials]
    - Vector search on query embedding (semantic)
    - Metadata filters (date, tags, project)
 4. Results ranked by relevance score
-5. Optional: Claude summarizes results
+5. Optional: chatgpt summarizes results
 
 **Technical Requirements:**
 - Query latency: <2 seconds (p95)
@@ -233,7 +498,7 @@ Special handling for "read later" content like tweets and Reddit posts. System a
 2. System marks bookmark as `ephemeral=true`
 3. Daily batch job runs:
    - Fetches tweet content via API/scraping
-   - Claude extracts key insights (2-3 bullet points)
+   - chatgpt extracts key insights (2-3 bullet points)
    - Appends to user's Google Doc: "Tech Insights - October 2025"
    - Marks bookmark as `processed=true`
 4. After 30 days, processed ephemeral bookmarks auto-delete

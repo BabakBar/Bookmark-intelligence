@@ -55,7 +55,7 @@ Cloud engineers, software developers, and knowledge workers managing 500+ bookma
 ## How It Works (30-Second Version)
 
 1. **Save a Bookmark** → Extension captures page context (URL, title, keywords)
-2. **AI Processing** → Claude generates tags, summary, and suggests project
+2. **AI Processing** → chatgpt generates tags, summary, and suggests project
 3. **Vector Search** → System finds similar bookmarks you already have
 4. **Smart Suggestions** → "You already have 3 similar bookmarks" or "Add to FabrikTakt project?"
 5. **Usage Tracking** → System learns which bookmarks you actually use
@@ -85,8 +85,8 @@ Cloud engineers, software developers, and knowledge workers managing 500+ bookma
 - **Backend**: FastAPI (Python 3.13+) with async/await
 - **AI Models**:
   - OpenAI `text-embedding-3-small` for embeddings (~$0.0004/month per user)
-  - Claude 3.5 Haiku for content analysis (~$0.04/month per user)
-  - Claude 3.5 Sonnet available for premium quality (~$0.15/month per user)
+  - chatgpt 3.5 Haiku for content analysis (~$0.04/month per user)
+  - chatgpt 3.5 Sonnet available for premium quality (~$0.15/month per user)
 - **Vector DB**: Qdrant 1.12+ (self-hosted) for sub-100ms similarity search
 - **Metadata DB**: PostgreSQL 17.x (self-hosted) with JSONB support
 - **Deployment**: Coolify on Hetzner VPS (self-hosted)
@@ -108,11 +108,14 @@ Cloud engineers, software developers, and knowledge workers managing 500+ bookma
 
 ## Development Timeline
 
-- **Phase 1 (Weeks 1-4)**: MVP - Bookmark save, auto-tagging, context surfacing
-- **Phase 2 (Weeks 5-8)**: Intelligence - Batch processing, project mode, engagement tracking
-- **Phase 3 (Weeks 9-12)**: Advanced - AI chat, ephemeral content, cross-project search
+- **Phase 0 (Weeks 1-2)**: Bootstrap - Import existing bookmarks, AI organization, infrastructure setup
+- **Phase 1 (Weeks 3-6)**: MVP - Browser extension for new bookmarks, auto-tagging, context surfacing
+- **Phase 2 (Weeks 7-10)**: Intelligence - Enhanced AI, clustering, project mode, engagement tracking
+- **Phase 3 (Weeks 11-14)**: Advanced - AI chat, ephemeral content, cross-project search, launch
 
-**Total**: 12 weeks to production-ready system
+**Total**: 14 weeks to production-ready system
+
+**Critical**: Phase 0 must complete first - no user starts with zero bookmarks. This phase imports and organizes existing bookmark collections, proving the AI works correctly before building the browser extension.
 
 ---
 

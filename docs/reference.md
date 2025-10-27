@@ -32,17 +32,16 @@
 | Service | Usage | Cost |
 |---------|-------|------|
 | **OpenAI Embeddings** | 40 bookmarks × 500 tokens | $0.0004 |
-| **Claude API (Real-time)** | 40 bookmarks/month × $0.00375 (Sonnet) | $0.15 |
-| **Claude API (Alternative)** | 40 bookmarks/month × $0.001 (Haiku) | $0.04 |
+| **chatgpt API (Real-time)** | 40 bookmarks/month × $0.00375 (Sonnet) | $0.15 |
+| **chatgpt API (Alternative)** | 40 bookmarks/month × $0.001 (Haiku) | $0.04 |
 | **Qdrant (Self-Hosted)** | Included in VPS | $0 |
 | **PostgreSQL (Self-Hosted)** | Included in VPS | $0 |
-| **Redis (Self-Hosted)** | Included in VPS | $0 |
+| **valkey (Self-Hosted)** | Included in VPS | $0 |
 | **Hetzner VPS CX32** | 8GB RAM, 80GB SSD | $13.00 |
 | **Total (Sonnet)** | | **~$13.15/month** |
 | **Total (Haiku)** | | **~$13.04/month** |
 
 **With Optimizations:**
-- Use Claude 3.5 Haiku instead of Sonnet: **73% AI cost savings**
 - Batch processing (consolidate requests): Reduces latency overhead
 - Qdrant quantization: 4x memory reduction, allows more bookmarks per GB
 
@@ -59,7 +58,7 @@
 - Hetzner VPS CX32 (8GB RAM, 80GB SSD): $13/month
 - Domain: $12/year (~$1/month)
 - Coolify (self-hosted): $0
-- All databases (PostgreSQL, Redis, Qdrant): $0 (included in VPS)
+- All databases (PostgreSQL, valkey, Qdrant): $0 (included in VPS)
 - **Total:** ~$14/month
 
 **Production (100-200 users):**
@@ -67,7 +66,7 @@
 - Domain + CDN (Cloudflare free): $1/month
 - Hetzner Storage Box (backups, 100GB): $3.50/month
 - **Total:** ~$17.50/month ($0.09-0.18/user)
-- **AI costs (per user):** ~$0.15/month (Claude Sonnet) or $0.04/month (Haiku)
+- **AI costs (per user):** ~$0.15/month (chatgpt Sonnet) or $0.04/month (Haiku)
 
 **Production (1,000 users):**
 - Hetzner VPS CX52 (16GB RAM, 160GB SSD): $25/month (upgrade from CX32)
@@ -75,13 +74,6 @@
 - Hetzner Storage Box (1TB backups): $10/month
 - Domain + CDN: $1/month
 - **Total:** ~$36/month ($0.036/user + AI costs)
-
-**Production (10,000 users):**
-- 10× Hetzner VPS CX32 (distributed): $130/month
-- OR: 2× Hetzner Dedicated AX52 (64GB RAM each): $120/month
-- Hetzner Storage Box (5TB): $25/month
-- Load balancer + CDN: $20/month
-- **Total:** ~$175/month ($0.0175/user + AI costs)
 
 **Cost Comparison: Self-Hosted vs. Cloud**
 
@@ -209,10 +201,10 @@
 - [ ] **Ephemeral Content:** Google Docs only, or support Notion/Obsidian?
   - Start with Google Docs (OAuth simpler)
   - Add Notion/Obsidian based on user demand
-- [x] **AI Model Choice:** Claude 3.5 Sonnet vs. Haiku for content analysis? → **Start with Haiku** ✓
+- [x] **AI Model Choice:** chatgpt 5 Sonnet vs. Haiku for content analysis? → **Start with Haiku** ✓
   - Haiku: 73% cheaper ($0.04 vs $0.15 per 40 bookmarks), fast, good quality
-  - Upgrade to Sonnet for users who need premium quality
-  - OpenAI GPT-4o-mini as alternative if Claude unavailable
+  - Upgrade to chatgpt for users who need premium quality
+  - OpenAI GPT-5-mini as alternative if chatgpt unavailable
 - [x] **Engagement Tracking Default:** Opt-in vs. Opt-out? → **Opt-in** ✓
   - More privacy-friendly, better for Chrome Store approval
   - Clear value proposition: "Enable to get insights and dead bookmark alerts"
@@ -258,7 +250,7 @@
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [Qdrant Documentation](https://qdrant.tech/documentation/)
 - [OpenAI Embeddings Guide](https://platform.openai.com/docs/guides/embeddings)
-- [Anthropic Claude API Documentation](https://docs.anthropic.com/)
+- [Anthropic chatgpt API Documentation](https://docs.anthropic.com/)
 - [PostgreSQL 17 Documentation](https://www.postgresql.org/docs/17/)
 - [Celery Documentation](https://docs.celeryq.dev/)
 - [Coolify Documentation](https://coolify.io/docs)
@@ -270,7 +262,7 @@
 
 - [FastAPI vs Flask vs Django (2025)](https://blog.jetbrains.com/pycharm/2025/02/django-flask-fastapi/)
 - [Top Vector Databases 2025](https://www.datacamp.com/blog/the-top-5-vector-databases)
-- [Anthropic Claude Pricing](https://www.anthropic.com/pricing)
+- [Anthropic chatgpt Pricing](https://www.anthropic.com/pricing)
 - [OpenAI Embedding Model Comparison](https://openai.com/index/new-embedding-models-and-api-updates/)
 - [Chrome Extension Manifest V3 Migration](https://developer.chrome.com/docs/extensions/migrating/to-service-workers/)
 - [Coolify vs Heroku vs Railway](https://coolify.io/)
@@ -290,7 +282,7 @@
 
 **For AI Integration:**
 - [OpenAI Cookbook](https://github.com/openai/openai-cookbook)
-- [Anthropic Claude Prompt Engineering Guide](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
+- [Anthropic chatgpt Prompt Engineering Guide](https://docs.anthropic.com/en/docs/build-with-chatgpt/prompt-engineering)
 
 **For Self-Hosting:**
 - [Coolify Getting Started](https://coolify.io/docs/introduction)

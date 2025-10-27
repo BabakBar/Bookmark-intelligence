@@ -1,0 +1,277 @@
+openapi: 3.0.3
+info:
+  title: BookmarkAI Bookmarks API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000/api/v1
+
+tags:
+  - name: bookmarks
+    description: Bookmark CRUD operations
+
+paths:
+  /bookmarks:
+    get:
+      tags: [bookmarks]
+      summary: List bookmarks
+      operationId: listBookmarks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: skip
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+            maximum: 100
+        - name: project_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: cluster_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: tags
+          in: query
+          schema:
+            type: array
+            items:
+              type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of bookmarks
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bookmarks:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Bookmark'
+                  total:
+                    type: integer
+                  skip:
+                    type: integer
+                  limit:
+                    type: integer
+
+    post:
+      tags: [bookmarks]
+      summary: Create bookmark (manual)
+      operationId: createBookmark
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookmarkCreate'
+      responses:
+        '201':
+          description: Bookmark created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bookmark'
+
+  /bookmarks/{bookmark_id}:
+    get:
+      tags: [bookmarks]
+      summary: Get bookmark
+      operationId: getBookmark
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BookmarkId'
+      responses:
+        '200':
+          description: Bookmark details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bookmark'
+
+    put:
+      tags: [bookmarks]
+      summary: Update bookmark
+      operationId: updateBookmark
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BookmarkId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BookmarkUpdate'
+      responses:
+        '200':
+          description: Bookmark updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bookmark'
+
+    delete:
+      tags: [bookmarks]
+      summary: Delete bookmark
+      operationId: deleteBookmark
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BookmarkId'
+      responses:
+        '204':
+          description: Bookmark deleted
+
+  /bookmarks/{bookmark_id}/similar:
+    get:
+      tags: [bookmarks]
+      summary: Find similar bookmarks
+      operationId: findSimilarBookmarks
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/BookmarkId'
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 5
+            maximum: 20
+      responses:
+        '200':
+          description: Similar bookmarks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    bookmark:
+                      $ref: '#/components/schemas/Bookmark'
+                    similarity_score:
+                      type: number
+                      format: float
+                      minimum: 0.0
+                      maximum: 1.0
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    BookmarkId:
+      name: bookmark_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    Bookmark:
+      type: object
+      required:
+        - id
+        - url
+        - title
+        - created_at
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+          format: uri
+        title:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        summary:
+          type: string
+          nullable: true
+        content_type:
+          type: string
+          enum: [tutorial, documentation, article, video, tool]
+          nullable: true
+        project_id:
+          type: string
+          format: uuid
+          nullable: true
+        clusters:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+                format: uuid
+              name:
+                type: string
+        processed:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    BookmarkCreate:
+      type: object
+      required:
+        - url
+        - title
+      properties:
+        url:
+          type: string
+          format: uri
+        title:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        project_id:
+          type: string
+          format: uuid
+          nullable: true
+
+    BookmarkUpdate:
+      type: object
+      properties:
+        title:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        summary:
+          type: string
+        project_id:
+          type: string
+          format: uuid
+          nullable: true
