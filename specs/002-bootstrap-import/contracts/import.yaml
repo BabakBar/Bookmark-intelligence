@@ -1,0 +1,377 @@
+openapi: 3.0.3
+info:
+  title: BookmarkAI Import API
+  description: API endpoints for importing and processing bookmark HTML exports
+  version: 1.0.0
+  contact:
+    name: Sia
+    email: sia@bookmarkai.example
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local development
+  - url: https://api.bookmarkai.local/api/v1
+    description: Production (Hetzner VPS)
+
+tags:
+  - name: import
+    description: Bookmark import and processing operations
+
+paths:
+  /import:
+    post:
+      tags:
+        - import
+      summary: Upload HTML bookmark file
+      description: Upload a browser bookmark export file (HTML format) to start the import process
+      operationId: uploadBookmarkFile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - file
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: HTML bookmark export file from Chrome/Firefox/Safari
+            encoding:
+              file:
+                contentType: text/html
+      responses:
+        '201':
+          description: Import job created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJobResponse'
+              example:
+                job_id: "550e8400-e29b-41d4-a716-446655440000"
+                status: "pending"
+                filename: "bookmarks_27_10_2025.html"
+                total_bookmarks: 800
+                progress: 0
+                created_at: "2025-10-27T10:30:00Z"
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '413':
+          description: File too large (max 50MB)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Invalid file format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                detail: "File is not a valid HTML bookmark export"
+
+  /import/{job_id}/status:
+    get:
+      tags:
+        - import
+      summary: Get import job status
+      description: Retrieve current status and progress of an import job
+      operationId: getImportJobStatus
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+          description: Import job ID
+      responses:
+        '200':
+          description: Import job status retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJobStatus'
+              example:
+                job_id: "550e8400-e29b-41d4-a716-446655440000"
+                status: "processing"
+                progress: 45
+                total_bookmarks: 800
+                imported_count: 800
+                embeddings_generated: 360
+                tags_generated: 360
+                failed_count: 0
+                estimated_completion: "2025-10-28T06:30:00Z"
+                total_cost_usd: "18.50"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /import/{job_id}/report:
+    get:
+      tags:
+        - import
+      summary: Get import job report
+      description: Retrieve detailed report of completed import job including errors and statistics
+      operationId: getImportJobReport
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Import job report retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ImportJobReport'
+              example:
+                job_id: "550e8400-e29b-41d4-a716-446655440000"
+                status: "completed"
+                total_bookmarks: 800
+                imported_count: 800
+                embeddings_generated: 795
+                tags_generated: 790
+                failed_count: 5
+                total_cost_usd: "42.30"
+                openai_cost_usd: "8.10"
+                claude_cost_usd: "34.20"
+                started_at: "2025-10-27T10:30:00Z"
+                completed_at: "2025-10-28T08:15:00Z"
+                duration_seconds: 78300
+                errors:
+                  - bookmark_url: "https://example.com/page1"
+                    error: "Failed to generate embedding: Timeout"
+                  - bookmark_url: "https://example.com/page2"
+                    error: "Failed to generate tags: API rate limit"
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /import/{job_id}/process:
+    post:
+      tags:
+        - import
+      summary: Trigger AI processing
+      description: Start AI processing (embeddings, tags, summaries) for imported bookmarks
+      operationId: triggerAIProcessing
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: job_id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '202':
+          description: AI processing started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [processing]
+                  estimated_cost_usd:
+                    type: string
+                    description: Estimated AI processing cost
+                  estimated_duration_hours:
+                    type: integer
+                    description: Estimated completion time in hours
+              example:
+                job_id: "550e8400-e29b-41d4-a716-446655440000"
+                status: "processing"
+                estimated_cost_usd: "42.00"
+                estimated_duration_hours: 18
+        '400':
+          description: Job not in correct state for processing
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    ImportJobResponse:
+      type: object
+      required:
+        - job_id
+        - status
+        - total_bookmarks
+        - progress
+        - created_at
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, importing, processing, clustering, completed, failed]
+        filename:
+          type: string
+        total_bookmarks:
+          type: integer
+          description: Number of bookmarks found in HTML file
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: Overall progress percentage
+        created_at:
+          type: string
+          format: date-time
+
+    ImportJobStatus:
+      type: object
+      required:
+        - job_id
+        - status
+        - progress
+        - total_bookmarks
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, importing, processing, clustering, completed, failed]
+        progress:
+          type: integer
+          minimum: 0
+          maximum: 100
+        total_bookmarks:
+          type: integer
+        imported_count:
+          type: integer
+        embeddings_generated:
+          type: integer
+        tags_generated:
+          type: integer
+        failed_count:
+          type: integer
+        estimated_completion:
+          type: string
+          format: date-time
+          nullable: true
+        total_cost_usd:
+          type: string
+          description: Current AI processing cost
+        error_message:
+          type: string
+          nullable: true
+
+    ImportJobReport:
+      type: object
+      required:
+        - job_id
+        - status
+        - total_bookmarks
+        - imported_count
+        - started_at
+      properties:
+        job_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [completed, failed]
+        total_bookmarks:
+          type: integer
+        imported_count:
+          type: integer
+        embeddings_generated:
+          type: integer
+        tags_generated:
+          type: integer
+        failed_count:
+          type: integer
+        total_cost_usd:
+          type: string
+        openai_cost_usd:
+          type: string
+        claude_cost_usd:
+          type: string
+        started_at:
+          type: string
+          format: date-time
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        duration_seconds:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: object
+            properties:
+              bookmark_url:
+                type: string
+              error:
+                type: string
+
+    Error:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Human-readable error message
+
+  responses:
+    BadRequest:
+      description: Invalid request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: "Could not validate credentials"
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            detail: "Import job not found"

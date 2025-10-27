@@ -48,7 +48,7 @@ Cloud engineers, software developers, and knowledge workers managing 500+ bookma
 ┌──▼────────────┐  ┌──▼──────────────┐
 │  Job Queue    │  │  AI Processing  │
 │  (Celery +    │  │  Layer          │
-│   Redis)      │  │  - chatgpt API   │
+│   valkey)      │  │  - chatgpt API   │
 │               │  │  - OpenAI Embed │
 └───────────────┘  └─────────────────┘
                           │
@@ -712,7 +712,7 @@ CREATE TABLE bookmark_clusters (
 
 ### 3.5 Job Queue & Task Scheduling
 
-**Selected:** Celery 5.3+ with Redis 7.x  
+**Selected:** Celery 5.3+ with valkey 7.x  
 **Why:** Industry standard for Python async tasks, reliable, scalable
 
 **Task Categories:**
@@ -952,7 +952,7 @@ Cost: $0.131 (vs $0.262 real-time, 50% savings)
 
 **Week 6: Batch Processing**
 - Celery task queue setup
-- Redis configuration
+- valkey configuration
 - Weekly batch job for clustering
 - Daily ephemeral content processing
 - Error handling and retry logic
@@ -1040,7 +1040,7 @@ Cost: $0.131 (vs $0.262 real-time, 50% savings)
 | **chatgpt API (Batch)** | Weekly processing (~40 bookmarks) | $0.08 |
 | **Qdrant Cloud** | 1GB storage | $0.50 |
 | **PostgreSQL (Supabase)** | Free tier | $0 |
-| **Redis (Upstash)** | Free tier | $0 |
+| **valkey (Upstash)** | Free tier | $0 |
 | **Total** | | **~$0.73/month** |
 
 **With Optimizations:**
@@ -1065,7 +1065,7 @@ Cost: $0.131 (vs $0.262 real-time, 50% savings)
 - Cloud Run (Backend): $50/month
 - Qdrant Cloud: $50/month
 - Supabase (PostgreSQL): $25/month
-- Redis: $10/month
+- valkey: $10/month
 - CDN + Storage: $20/month
 - **Total:** ~$155/month ($1.55/user)
 

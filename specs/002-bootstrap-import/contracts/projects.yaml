@@ -1,0 +1,249 @@
+openapi: 3.0.3
+info:
+  title: BookmarkAI Projects API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000/api/v1
+
+tags:
+  - name: projects
+    description: Project management and suggestions
+
+paths:
+  /projects:
+    get:
+      tags: [projects]
+      summary: List projects
+      operationId: listProjects
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: active_only
+          in: query
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: List of projects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Project'
+
+    post:
+      tags: [projects]
+      summary: Create project
+      operationId: createProject
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectCreate'
+      responses:
+        '201':
+          description: Project created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+  /projects/suggest:
+    post:
+      tags: [projects]
+      summary: Generate project suggestions
+      operationId: suggestProjects
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                min_projects:
+                  type: integer
+                  default: 3
+                max_projects:
+                  type: integer
+                  default: 5
+      responses:
+        '200':
+          description: Project suggestions generated
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProjectSuggestion'
+
+  /projects/{project_id}:
+    get:
+      tags: [projects]
+      summary: Get project details
+      operationId: getProject
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '200':
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProjectDetail'
+
+    put:
+      tags: [projects]
+      summary: Update project
+      operationId: updateProject
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProjectUpdate'
+      responses:
+        '200':
+          description: Project updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project'
+
+    delete:
+      tags: [projects]
+      summary: Delete project
+      operationId: deleteProject
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ProjectId'
+      responses:
+        '204':
+          description: Project deleted
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  parameters:
+    ProjectId:
+      name: project_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    Project:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        bookmark_count:
+          type: integer
+        context_keywords:
+          type: array
+          items:
+            type: string
+        is_suggested:
+          type: boolean
+        suggestion_accepted:
+          type: boolean
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    ProjectCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          minLength: 1
+          maxLength: 255
+        description:
+          type: string
+
+    ProjectUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        is_active:
+          type: boolean
+
+    ProjectSuggestion:
+      type: object
+      required:
+        - suggested_name
+        - bookmark_count
+        - confidence
+      properties:
+        suggested_name:
+          type: string
+        bookmark_count:
+          type: integer
+        confidence:
+          type: number
+          format: float
+          minimum: 0.0
+          maximum: 1.0
+        cluster_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        keywords:
+          type: array
+          items:
+            type: string
+
+    ProjectDetail:
+      allOf:
+        - $ref: '#/components/schemas/Project'
+        - type: object
+          properties:
+            bookmarks:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    format: uuid
+                  url:
+                    type: string
+                  title:
+                    type: string

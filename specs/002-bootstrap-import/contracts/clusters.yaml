@@ -1,0 +1,224 @@
+openapi: 3.0.3
+info:
+  title: BookmarkAI Clusters API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8000/api/v1
+
+tags:
+  - name: clusters
+    description: Bookmark clustering operations
+
+paths:
+  /clusters:
+    get:
+      tags: [clusters]
+      summary: List clusters
+      operationId: listClusters
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of clusters
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Cluster'
+
+    post:
+      tags: [clusters]
+      summary: Generate clusters (batch)
+      operationId: generateClusters
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                min_k:
+                  type: integer
+                  default: 8
+                max_k:
+                  type: integer
+                  default: 15
+      responses:
+        '202':
+          description: Clustering job started
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  job_id:
+                    type: string
+                    format: uuid
+                  status:
+                    type: string
+                    enum: [clustering]
+
+  /clusters/{cluster_id}:
+    get:
+      tags: [clusters]
+      summary: Get cluster details
+      operationId: getCluster
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ClusterId'
+      responses:
+        '200':
+          description: Cluster details with bookmarks
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Cluster'
+                  - type: object
+                    properties:
+                      bookmarks:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/BookmarkSummary'
+
+    put:
+      tags: [clusters]
+      summary: Update cluster (rename)
+      operationId: updateCluster
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ClusterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                is_accepted:
+                  type: boolean
+      responses:
+        '200':
+          description: Cluster updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cluster'
+
+    delete:
+      tags: [clusters]
+      summary: Delete cluster
+      operationId: deleteCluster
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ClusterId'
+      responses:
+        '204':
+          description: Cluster deleted
+
+  /clusters/{cluster_id}/merge:
+    post:
+      tags: [clusters]
+      summary: Merge two clusters
+      operationId: mergeClusters
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/ClusterId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - target_cluster_id
+              properties:
+                target_cluster_id:
+                  type: string
+                  format: uuid
+                new_name:
+                  type: string
+      responses:
+        '200':
+          description: Clusters merged
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Cluster'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+
+  parameters:
+    ClusterId:
+      name: cluster_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  schemas:
+    Cluster:
+      type: object
+      required:
+        - id
+        - name
+        - bookmark_count
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        representative_keywords:
+          type: array
+          items:
+            type: string
+        bookmark_count:
+          type: integer
+        silhouette_score:
+          type: number
+          format: float
+          nullable: true
+        is_accepted:
+          type: boolean
+        is_renamed:
+          type: boolean
+        original_name:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+
+    BookmarkSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+        title:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        similarity_score:
+          type: number
+          format: float

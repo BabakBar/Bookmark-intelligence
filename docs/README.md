@@ -90,19 +90,25 @@ Cost analysis, security specifications, success metrics, glossary, and resources
 
 ## 🚀 Quick Start Paths
 
+### For First-Time Users (You!)
+1. Read [Phase 0 Bootstrap](roadmap.md#phase-0-bootstrap--import-weeks-1-2) - **START HERE** - Import your 800 existing bookmarks
+2. Review [Bootstrap Features](features.md#phase-0-bootstrap--import-prerequisite) - See what Phase 0 delivers
+3. Check [Architecture](architecture.md#phase-0-bootstrap-import-flow-one-time) - Understand the import flow
+
 ### For Product Managers
 1. Read [Overview](overview.md) - Understand the product vision
-2. Browse [Features](features.md) - Review feature specifications
-3. Check [Roadmap](roadmap.md) - See development timeline
+2. Browse [Features](features.md) - Review feature specifications (start with Phase 0)
+3. Check [Roadmap](roadmap.md) - See development timeline (note: Phase 0 comes first)
 
 ### For Engineers
-1. Read [Architecture](architecture.md) - Understand system design
-2. Review [Features](features.md) - Get technical requirements
-3. Follow [Roadmap](roadmap.md) - Track implementation phases
+1. Read [Phase 0 Bootstrap](roadmap.md#phase-0-bootstrap--import-weeks-1-2) - **START HERE** - Setup infrastructure first
+2. Read [Architecture](architecture.md) - Understand system design
+3. Review [Features](features.md) - Get technical requirements
+4. Follow [Roadmap](roadmap.md) - Track implementation phases
 
 ### For Stakeholders
 1. Start with [Overview](overview.md) - Get the big picture
-2. Jump to [Reference](reference.md#cost-analysis) - Review costs
+2. Jump to [Reference](reference.md#cost-analysis) - Review costs (includes Phase 0 one-time cost)
 3. Check [Roadmap](roadmap.md#success-milestones) - See launch targets
 
 ---
@@ -131,9 +137,10 @@ Users save hundreds of bookmarks but:
 - Complete data ownership with self-hosted infrastructure
 
 ### Development Timeline
-- **4 weeks:** MVP with core features
-- **8 weeks:** Intelligence layer + engagement tracking
-- **12 weeks:** Production-ready with advanced features
+- **2 weeks:** Phase 0 - Import & organize existing 800 bookmarks (bootstrap)
+- **6 weeks:** MVP browser extension for new bookmarks
+- **10 weeks:** Intelligence layer + engagement tracking
+- **14 weeks:** Production-ready with advanced features
 
 ---
 
@@ -158,8 +165,8 @@ See [Reference > Success Metrics](reference.md#success-metrics) for complete lis
 | **Backend** | FastAPI (Python 3.13+) | Async-native, 3-5x faster than alternatives |
 | **Vector DB** | Qdrant 1.12+ (self-hosted) | Best filtered search, open-source, low resource footprint |
 | **Metadata DB** | PostgreSQL 17.x (self-hosted) | Industry standard, JSONB support, v17 performance improvements |
-| **Job Queue** | Celery 5.4+ + Redis 7.4+ | Reliable async tasks |
-| **AI Models** | OpenAI embeddings + Claude 3.5 Haiku/Sonnet | Cost-effective, high quality |
+| **Job Queue** | Celery 5.4+ + valkey 7.4+ | Reliable async tasks |
+| **AI Models** | OpenAI embeddings + chatgpt 3.5 Haiku/Sonnet | Cost-effective, high quality |
 | **Deployment** | Coolify on Hetzner VPS | Self-hosted, 93% cost savings vs cloud |
 
 See [Architecture > Technology Stack](architecture.md#technology-stack) for details.

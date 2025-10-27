@@ -39,7 +39,7 @@
 ┌──▼────────────┐  ┌──▼──────────────┐
 │  Job Queue    │  │  AI Processing  │
 │  (Celery +    │  │  Layer          │
-│   Redis)      │  │  - Claude API   │
+│   valkey)      │  │  - chatgpt API   │
 │               │  │  - OpenAI Embed │
 └───────────────┘  └─────────────────┘
                           │
@@ -58,20 +58,44 @@
 
 ## Data Flows
 
-### Real-Time Flow (New Bookmark)
+### Phase 0: Bootstrap Import Flow (One-Time)
 
-1. User saves bookmark in browser
+**Initial Setup for Existing Bookmarks**
+
+1. User exports bookmarks from browser as HTML file (Chrome/Firefox/Safari)
+2. User uploads HTML file to web interface at `/import`
+3. Backend parses HTML using `bookmarks-parser` library
+4. System extracts all URLs, titles, and folder structure
+5. All bookmarks imported into PostgreSQL (zero data loss)
+6. Batch job triggered: Generate embeddings for all bookmarks via OpenAI Batch API (50% cost savings)
+7. Batch job: Claude 3.5 Haiku generates tags (3-7) and summaries (2-3 sentences) for each bookmark
+8. Clustering job: MiniBatchKMeans with cosine similarity creates 8-15 semantic clusters
+9. Project suggestion: Algorithm analyzes clusters and suggests 3-5 initial projects
+10. User reviews organized bookmarks in web dashboard, accepts/renames clusters and projects
+11. System ready: 800+ bookmarks organized, tagged, and ready for Phase 1 extension
+
+**Cost for 800 bookmarks:** ~$40 one-time (OpenAI $8 + Claude $32)
+**Time:** 12-24 hours for complete processing
+
+---
+
+### Real-Time Flow (New Bookmark via Extension)
+
+**Ongoing Use After Phase 0**
+
+1. User saves new bookmark in browser via extension
 2. Extension captures metadata (URL, title, DOM context)
-3. Backend generates embedding via OpenAI API
-4. AI generates summary + tags using Claude API (real-time)
-5. System suggests matching project
-6. Data stored in PostgreSQL + Vector DB
-7. User confirms/adjusts project assignment
+3. Backend generates embedding via OpenAI API (real-time, <500ms)
+4. AI generates summary + tags using Claude API (real-time, <3s)
+5. System suggests matching project by comparing to existing project embeddings
+6. System suggests appropriate cluster based on similarity to existing clusters
+7. Data stored in PostgreSQL + Qdrant Vector DB
+8. User confirms/adjusts project and cluster assignment
 
 ### Batch Processing Flow (Daily/Weekly)
 
 1. Celery scheduled job collects unprocessed bookmarks
-2. Batch request submitted to Claude API or scheduled processing
+2. Batch request submitted to chatgpt API or scheduled processing
 3. Results processed asynchronously
 4. Embeddings updated, clusters recalculated
 5. Ephemeral content processed → Google Docs
@@ -324,9 +348,9 @@ CREATE TABLE bookmark_clusters (
 
 ### Job Queue & Task Scheduling
 
-**Selected**: Celery 5.4+ with Redis 7.4.x (Self-Hosted)
+**Selected**: Celery 5.4+ with valkey 7.4.x (Self-Hosted)
 
-**Deployment**: Redis and Celery workers as Docker containers on Hetzner VPS via Coolify
+**Deployment**: valkey and Celery workers as Docker containers on Hetzner VPS via Coolify
 
 **Task Categories**:
 
@@ -386,15 +410,15 @@ app.conf.beat_schedule = {
 Cost: $0.0004/month
 ```
 
-#### Content Analysis: Claude 3.5 Sonnet (Anthropic)
+#### Content Analysis: chatgpt 3.5 Sonnet (Anthropic)
 
-**Model**: `claude-3-5-sonnet-20241022`
+**Model**: `chatgpt-3-5-sonnet-20241022`
 
 **Pricing (Standard)**:
 - Input: $3 per 1M tokens
 - Output: $15 per 1M tokens
 
-**Alternative**: Claude 3.5 Haiku (5x cheaper, faster, slightly lower quality)
+**Alternative**: chatgpt 3.5 Haiku (5x cheaper, faster, slightly lower quality)
 - Input: $0.80 per 1M tokens
 - Output: $4.00 per 1M tokens
 
@@ -408,12 +432,12 @@ Cost per bookmark (Haiku): $0.001
 
 **Batch Processing (Weekly - 40 bookmarks)**:
 ```
-Using Claude 3.5 Sonnet:
+Using chatgpt 3.5 Sonnet:
 Input: 20K tokens (40 × 500)
 Output: 6K tokens (40 × 150)
 Cost: $0.15/week
 
-Using Claude 3.5 Haiku:
+Using chatgpt 3.5 Haiku:
 Cost: $0.04/week (73% savings)
 ```
 
@@ -456,7 +480,7 @@ Cost: $0.04/week (73% savings)
 Service                    RAM     Storage   Port(s)
 ─────────────────────────────────────────────────────
 PostgreSQL 17              1.5GB   10GB      5432 (internal)
-Redis 7.4                  512MB   500MB     6379 (internal)
+valkey 7.4                  512MB   500MB     6379 (internal)
 Qdrant 1.12                2GB     5GB       6333 (internal)
 FastAPI Backend            1GB     2GB       8000 → 443 (public)
 Celery Worker              1GB     1GB       - (internal)
@@ -484,12 +508,12 @@ networks:
   - internal
 ```
 
-#### 2. Redis
+#### 2. valkey
 ```yaml
-image: redis:7.4-alpine
-command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+image: valkey:7.4-alpine
+command: valkey-server --maxmemory 512mb --maxmemory-policy allkeys-lru
 volumes:
-  - redis_data:/data
+  - valkey_data:/data
 networks:
   - internal
 ```
@@ -510,7 +534,7 @@ networks:
 build: ./backend
 environment:
   DATABASE_URL: postgresql+asyncpg://user:pass@postgresql:5432/bookmarkai
-  REDIS_URL: redis://redis:6379/0
+  valkey_URL: valkey://valkey:6379/0
   QDRANT_URL: http://qdrant:6333
   OPENAI_API_KEY: ${OPENAI_API_KEY}
   ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
@@ -551,7 +575,7 @@ Internet
    │                                              ↓
    └─→ :8000 (Admin) ─→ Coolify Dashboard        Internal Network
                                                   ├─→ PostgreSQL :5432
-                                                  ├─→ Redis :6379
+                                                  ├─→ valkey :6379
                                                   ├─→ Qdrant :6333
                                                   ├─→ Celery Worker
                                                   └─→ Celery Beat
@@ -583,7 +607,7 @@ quantization:
     always_ram: false
 ```
 
-**Redis** (512MB):
+**valkey** (512MB):
 ```conf
 maxmemory 512mb
 maxmemory-policy allkeys-lru
@@ -613,7 +637,7 @@ rclone sync /backups remote:bookmarkai-backups/
 | Compute (Cloud Run) | $100 | $0 | $100 |
 | Qdrant Cloud | $50 | $0 | $50 |
 | PostgreSQL (Supabase) | $25 | $0 | $25 |
-| Redis (Upstash) | $10 | $0 | $10 |
+| valkey (Upstash) | $10 | $0 | $10 |
 | **Infrastructure Total** | **$185** | **$13** (VPS) | **$172/mo** |
 | **Annual Savings** | | | **$2,064/year** |
 
@@ -623,10 +647,26 @@ rclone sync /backups remote:bookmarkai-backups/
 
 ## API Endpoints
 
+### Phase 0: Import & Bootstrap
+```
+POST   /api/v1/import                   # Upload HTML bookmark file
+GET    /api/v1/import/status/:job_id    # Get import job status
+POST   /api/v1/import/process           # Trigger batch AI processing
+GET    /api/v1/import/report/:job_id    # Get processing report
+
+POST   /api/v1/clusters                 # Generate clusters (batch)
+GET    /api/v1/clusters                 # List all clusters
+PUT    /api/v1/clusters/:id             # Rename/modify cluster
+POST   /api/v1/clusters/:id/merge       # Merge two clusters
+DELETE /api/v1/clusters/:id             # Delete cluster
+
+POST   /api/v1/projects/suggest         # Generate project suggestions
+```
+
 ### Bookmarks
 ```
 GET    /api/v1/bookmarks           # List all bookmarks
-POST   /api/v1/bookmarks           # Create new bookmark
+POST   /api/v1/bookmarks           # Create new bookmark (from extension)
 GET    /api/v1/bookmarks/:id       # Get bookmark details
 PUT    /api/v1/bookmarks/:id       # Update bookmark
 DELETE /api/v1/bookmarks/:id       # Delete bookmark
