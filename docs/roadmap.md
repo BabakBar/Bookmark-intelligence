@@ -104,7 +104,7 @@
 
 **Focus:** Advanced AI processing for content analysis
 
-- Claude API client
+- Anthropic Claude API client (Haiku & Sonnet)
 - Summary generation
 - Tag refinement
 - Content type classification
@@ -310,8 +310,9 @@
 |------|--------|-----------|
 | Chrome Web Store rejection | High | Follow all Manifest V3 guidelines, clear privacy policy |
 | Qdrant performance issues at scale | Medium | Load test early, have pgvector backup plan |
-| Claude API rate limits | Medium | Implement batch processing, queue management |
-| Embedding costs exceed budget | Low | Monitor usage, offer batch-only tier |
+| Claude API rate limits | Medium | Implement batch processing, queue management, fallback to Haiku |
+| Embedding costs exceed budget | Low | Monitor usage, self-hosted deployment reduces infrastructure costs by 93% |
+| VPS resource exhaustion | Medium | Monitor resource usage, scale to CX52 or add instances via Coolify |
 
 ### Product Risks
 

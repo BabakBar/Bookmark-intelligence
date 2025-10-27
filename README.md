@@ -79,7 +79,7 @@ This cleaner is designed to prepare bookmarks for **BookmarkAI** - an AI-powered
 **How it integrates:**
 - **Flat JSON** → Ready for vector embeddings (OpenAI text-embedding-3-small)
 - **Structured data** → Easy to import into PostgreSQL
-- **Clean titles/URLs** → Better AI analysis with Claude
+- **Clean titles/URLs** → Better AI analysis with chatgpt
 
 ### Learn More About BookmarkAI
 

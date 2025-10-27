@@ -76,8 +76,8 @@ Detailed specifications for all features including user flows, technical require
 Cost analysis, security specifications, success metrics, glossary, and resources.
 
 **What you'll find:**
-- Per-user cost breakdown (~$0.48-0.73/month)
-- Infrastructure costs
+- Cost breakdown for self-hosted deployment (~$13/month total for 100-200 users)
+- Infrastructure costs comparison (93% savings vs cloud)
 - Security & privacy specifications
 - Product & technical metrics
 - Open questions & decisions
@@ -125,9 +125,10 @@ Users save hundreds of bookmarks but:
 - **Privacy-First:** On-demand processing, no continuous monitoring
 
 ### Cost Efficiency
-- **$0.48-0.73/month per user** for AI services
-- 95% cost reduction vs. continuous monitoring approach
-- 50% savings via batch processing
+- **$13/month total** for self-hosted deployment (covers 100-200 users)
+- **93% cost savings** vs cloud services ($13 vs $185/month)
+- AI costs: $0.04-0.15/month per user depending on model choice
+- Complete data ownership with self-hosted infrastructure
 
 ### Development Timeline
 - **4 weeks:** MVP with core features
@@ -154,11 +155,12 @@ See [Reference > Success Metrics](reference.md#success-metrics) for complete lis
 | Component | Technology | Why |
 |-----------|-----------|-----|
 | **Frontend** | Chrome Extension (Manifest V3) + React + TypeScript | Modern, required standard |
-| **Backend** | FastAPI (Python 3.11+) | Async-native, 3-5x faster than alternatives |
-| **Vector DB** | Qdrant | Best filtered search, open-source |
-| **Metadata DB** | PostgreSQL 16+ | Industry standard, JSONB support |
-| **Job Queue** | Celery + Redis | Reliable async tasks |
-| **AI Models** | OpenAI embeddings + Claude Sonnet 4.5 | Cost-effective, high quality |
+| **Backend** | FastAPI (Python 3.13+) | Async-native, 3-5x faster than alternatives |
+| **Vector DB** | Qdrant 1.12+ (self-hosted) | Best filtered search, open-source, low resource footprint |
+| **Metadata DB** | PostgreSQL 17.x (self-hosted) | Industry standard, JSONB support, v17 performance improvements |
+| **Job Queue** | Celery 5.4+ + Redis 7.4+ | Reliable async tasks |
+| **AI Models** | OpenAI embeddings + Claude 3.5 Haiku/Sonnet | Cost-effective, high quality |
+| **Deployment** | Coolify on Hetzner VPS | Self-hosted, 93% cost savings vs cloud |
 
 See [Architecture > Technology Stack](architecture.md#technology-stack) for details.
 

@@ -18,7 +18,8 @@ Contextual Bookmark Intelligence is an AI-powered browser extension and backend 
 - **Intelligent Organization**: AI-powered clustering and tagging eliminates manual folder management
 - **Project-Based Workflows**: Dynamic workspaces that adapt to active projects
 - **Natural Language Search**: Ask questions like "find docker tutorials from January" instead of navigating folder hierarchies
-- **Cost-Optimized AI Processing**: 50% cost savings through batch processing for non-urgent tasks
+- **Self-Hosted & Private**: Fully self-hosted on your infrastructure via Coolify, complete data ownership
+- **Cost-Effective**: 93% cheaper than cloud alternatives ($13/month vs $185/month for equivalent services)
 - **Ephemeral Content Workflow**: Automated extraction of valuable insights from tweets/Reddit posts to Google Docs
 
 ---
@@ -81,13 +82,15 @@ Cloud engineers, software developers, and knowledge workers managing 500+ bookma
 ## Technology Highlights
 
 - **Frontend**: Chrome Extension (Manifest V3) with React + TypeScript
-- **Backend**: FastAPI (Python 3.11+) with async/await
+- **Backend**: FastAPI (Python 3.13+) with async/await
 - **AI Models**:
   - OpenAI `text-embedding-3-small` for embeddings (~$0.0004/month per user)
-  - Claude Sonnet 4.5 for content analysis (~$0.15/month per user)
-- **Vector DB**: Qdrant for sub-100ms similarity search
-- **Metadata DB**: PostgreSQL 16+ with JSONB support
-- **Cost**: **~$0.73/month per user** (or $0.48 with batch-only processing)
+  - Claude 3.5 Haiku for content analysis (~$0.04/month per user)
+  - Claude 3.5 Sonnet available for premium quality (~$0.15/month per user)
+- **Vector DB**: Qdrant 1.12+ (self-hosted) for sub-100ms similarity search
+- **Metadata DB**: PostgreSQL 17.x (self-hosted) with JSONB support
+- **Deployment**: Coolify on Hetzner VPS (self-hosted)
+- **Cost**: **~$13.04/month total** (covers ~100-200 users)
 
 ---
 

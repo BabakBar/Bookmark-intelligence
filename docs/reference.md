@@ -17,12 +17,13 @@
 
 ## Cost Analysis
 
-### Per-User Monthly Costs (Steady State)
+### Per-User Monthly Costs (Self-Hosted on Hetzner VPS)
 
 **Assumptions:**
 - 1000 bookmarks in library
 - 5-10 new bookmarks/week (~40/month)
 - Context searches triggered only on saves (~40/month)
+- Self-hosted infrastructure on Hetzner CX32 via Coolify
 
 **Note:** On-demand surfacing (triggered only on bookmark saves) reduces vector search volume by ~95% compared to continuous monitoring approaches.
 
@@ -31,46 +32,64 @@
 | Service | Usage | Cost |
 |---------|-------|------|
 | **OpenAI Embeddings** | 40 bookmarks × 500 tokens | $0.0004 |
-| **Claude API (Real-time)** | 40 bookmarks/month × $0.00375 | $0.15 |
-| **Claude API (Batch)** | Weekly processing (~40 bookmarks) | $0.08 |
-| **Qdrant Cloud** | 1GB storage | $0.50 |
-| **PostgreSQL (Supabase)** | Free tier | $0 |
-| **Redis (Upstash)** | Free tier | $0 |
-| **Total** | | **~$0.73/month** |
+| **Claude API (Real-time)** | 40 bookmarks/month × $0.00375 (Sonnet) | $0.15 |
+| **Claude API (Alternative)** | 40 bookmarks/month × $0.001 (Haiku) | $0.04 |
+| **Qdrant (Self-Hosted)** | Included in VPS | $0 |
+| **PostgreSQL (Self-Hosted)** | Included in VPS | $0 |
+| **Redis (Self-Hosted)** | Included in VPS | $0 |
+| **Hetzner VPS CX32** | 8GB RAM, 80GB SSD | $13.00 |
+| **Total (Sonnet)** | | **~$13.15/month** |
+| **Total (Haiku)** | | **~$13.04/month** |
 
 **With Optimizations:**
-- Batch-only processing (no real-time Claude): Saves $0.15/month → **$0.58/month**
-- Prompt caching (90% discount on repeated prompts): Additional ~$0.10 savings → **$0.48/month**
+- Use Claude 3.5 Haiku instead of Sonnet: **73% AI cost savings**
+- Batch processing (consolidate requests): Reduces latency overhead
+- Qdrant quantization: 4x memory reduction, allows more bookmarks per GB
 
 **Scalability:**
-- 10,000 users: $4,800/month (batch-only + caching)
-- 100,000 users: $48,000/month
+- Single VPS (CX32): ~100-200 concurrent users
+- 10,000 users: ~$650/month (50 VPS instances + AI costs)
+- 100,000 users: ~$6,500/month
 
 ---
 
-### Infrastructure Costs
+### Infrastructure Costs (Self-Hosted on Hetzner)
 
-**Development (Self-hosted):**
-- DigitalOcean Droplet (4GB RAM): $24/month
-- Qdrant Cloud (Starter): $20/month
-- Domains + SSL: $15/year
-- **Total:** ~$45/month
+**Development & MVP (1-50 users):**
+- Hetzner VPS CX32 (8GB RAM, 80GB SSD): $13/month
+- Domain: $12/year (~$1/month)
+- Coolify (self-hosted): $0
+- All databases (PostgreSQL, Redis, Qdrant): $0 (included in VPS)
+- **Total:** ~$14/month
 
-**Production (100 users):**
-- Cloud Run (Backend): $50/month
-- Qdrant Cloud: $50/month
-- Supabase (PostgreSQL): $25/month
-- Redis: $10/month
-- CDN + Storage: $20/month
-- **Total:** ~$155/month ($1.55/user)
+**Production (100-200 users):**
+- Hetzner VPS CX32: $13/month
+- Domain + CDN (Cloudflare free): $1/month
+- Hetzner Storage Box (backups, 100GB): $3.50/month
+- **Total:** ~$17.50/month ($0.09-0.18/user)
+- **AI costs (per user):** ~$0.15/month (Claude Sonnet) or $0.04/month (Haiku)
 
 **Production (1,000 users):**
-- Cloud Run (Backend): $150/month
-- Qdrant Cloud: $150/month
-- Supabase (PostgreSQL): $100/month
-- Redis: $30/month
-- CDN + Storage: $50/month
-- **Total:** ~$480/month ($0.48/user + AI costs)
+- Hetzner VPS CX52 (16GB RAM, 160GB SSD): $25/month (upgrade from CX32)
+- OR: 2× Hetzner VPS CX32 with load balancing: $26/month
+- Hetzner Storage Box (1TB backups): $10/month
+- Domain + CDN: $1/month
+- **Total:** ~$36/month ($0.036/user + AI costs)
+
+**Production (10,000 users):**
+- 10× Hetzner VPS CX32 (distributed): $130/month
+- OR: 2× Hetzner Dedicated AX52 (64GB RAM each): $120/month
+- Hetzner Storage Box (5TB): $25/month
+- Load balancer + CDN: $20/month
+- **Total:** ~$175/month ($0.0175/user + AI costs)
+
+**Cost Comparison: Self-Hosted vs. Cloud**
+
+| Users | Cloud (from original) | Self-Hosted (Hetzner) | Savings |
+|-------|-----------------------|-----------------------|---------|
+| 100 | $155/month | $17.50/month | $137.50/month (89% savings) |
+| 1,000 | $480/month | $36/month | $444/month (93% savings) |
+| 10,000 | ~$3,000/month | $175/month | $2,825/month (94% savings) |
 
 ---
 
@@ -170,31 +189,33 @@
 
 ### Technical Decisions
 
-- [ ] **Vector DB Choice:** Qdrant vs. Pinecone vs. pgvector? → **Qdrant** (cost + performance)
-- [ ] **Hosting:** Self-hosted vs. Cloud Run vs. AWS Lambda?
-  - Cloud Run: Best for MVP, auto-scaling, pay-per-use
-  - AWS Lambda: More complex but potentially cheaper at scale
-  - Self-hosted: Full control but requires DevOps effort
+- [x] **Vector DB Choice:** Qdrant vs. Pinecone vs. pgvector? → **Qdrant 1.12+ (self-hosted)** ✓
+  - Self-hosted on Hetzner VPS, significant cost savings
+- [x] **Hosting:** Self-hosted vs. Cloud Run vs. AWS Lambda? → **Self-hosted on Hetzner via Coolify** ✓
+  - Cost: $13/month vs $185+/month cloud services (93% savings)
+  - Full control, predictable costs, excellent performance
+  - Coolify provides easy deployment and management
 - [ ] **Chrome Web Store:** Free vs. $5 one-time fee?
-  - Free: Better adoption, competitive with alternatives
-  - Paid: Filters serious users, small revenue stream
+  - Recommendation: **Free** (better adoption, offset by low hosting costs)
 
 ---
 
 ### Product Decisions
 
-- [ ] **Freemium Model?** Free tier (100 bookmarks) + Pro ($5/month)?
-  - Free tier attracts users, Pro for power users
-  - Alternative: Completely free during beta, monetize later
+- [ ] **Freemium Model?** Free tier (unlimited bookmarks) + Pro for advanced features?
+  - With self-hosted costs at $13/month, can offer generous free tier
+  - Pro features: Team collaboration, advanced analytics, API access
+  - Alternative: Completely free for individuals, charge for teams/enterprises
 - [ ] **Ephemeral Content:** Google Docs only, or support Notion/Obsidian?
   - Start with Google Docs (OAuth simpler)
   - Add Notion/Obsidian based on user demand
-- [ ] **AI Model Choice:** Claude Sonnet 4.5 vs. Haiku 4.5 for batch jobs?
-  - Sonnet: Better quality, current choice
-  - Haiku: 5x cheaper, test quality trade-off
-- [ ] **Engagement Tracking Default:** Opt-in vs. Opt-out?
-  - Opt-in: More privacy-friendly, better for Chrome Store approval
-  - Opt-out: Higher adoption, more data for relevance scoring
+- [x] **AI Model Choice:** Claude 3.5 Sonnet vs. Haiku for content analysis? → **Start with Haiku** ✓
+  - Haiku: 73% cheaper ($0.04 vs $0.15 per 40 bookmarks), fast, good quality
+  - Upgrade to Sonnet for users who need premium quality
+  - OpenAI GPT-4o-mini as alternative if Claude unavailable
+- [x] **Engagement Tracking Default:** Opt-in vs. Opt-out? → **Opt-in** ✓
+  - More privacy-friendly, better for Chrome Store approval
+  - Clear value proposition: "Enable to get insights and dead bookmark alerts"
 
 ---
 
@@ -215,13 +236,15 @@
 
 ## Glossary
 
-- **Batch Processing:** Asynchronous AI processing with 24-hour turnaround for cost savings (50% discount via Claude Batch API)
+- **Batch Processing:** Asynchronous AI processing for cost optimization and efficient resource usage
+- **Coolify:** Open-source, self-hosted Platform-as-a-Service (PaaS) for deploying applications via Docker
 - **Context:** The browsing environment including URL, page content, time, and active project
 - **Dead Bookmark:** A bookmark saved >6 months ago with 0 opens (engagement tracking metric)
 - **Embedding:** A numerical vector (array of floats) representing semantic meaning of text (1536 dimensions for text-embedding-3-small)
 - **Engagement Tracking:** Passive monitoring of bookmark opens to identify usage patterns and unused bookmarks
 - **Ephemeral Bookmark:** Temporary bookmark (tweets, Reddit) meant for content extraction, not long-term storage
 - **Project:** A collection of related bookmarks representing a work context or area of interest
+- **Quantization:** Technique to reduce vector storage size by 4x (e.g., float32 → int8) with minimal accuracy loss
 - **Relevance Score:** Combined metric of vector similarity (60%), engagement (25%), and recency (15%)
 - **Vector Search:** Finding similar items by comparing embeddings using cosine similarity
 
@@ -235,9 +258,11 @@
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [Qdrant Documentation](https://qdrant.tech/documentation/)
 - [OpenAI Embeddings Guide](https://platform.openai.com/docs/guides/embeddings)
-- [Claude API Documentation](https://docs.anthropic.com/)
-- [PostgreSQL 16 Documentation](https://www.postgresql.org/docs/16/)
+- [Anthropic Claude API Documentation](https://docs.anthropic.com/)
+- [PostgreSQL 17 Documentation](https://www.postgresql.org/docs/17/)
 - [Celery Documentation](https://docs.celeryq.dev/)
+- [Coolify Documentation](https://coolify.io/docs)
+- [Hetzner Cloud Documentation](https://docs.hetzner.com/)
 
 ---
 
@@ -245,9 +270,11 @@
 
 - [FastAPI vs Flask vs Django (2025)](https://blog.jetbrains.com/pycharm/2025/02/django-flask-fastapi/)
 - [Top Vector Databases 2025](https://www.datacamp.com/blog/the-top-5-vector-databases)
-- [Claude Batch API Pricing](https://docs.anthropic.com/en/docs/about-claude/pricing)
+- [Anthropic Claude Pricing](https://www.anthropic.com/pricing)
 - [OpenAI Embedding Model Comparison](https://openai.com/index/new-embedding-models-and-api-updates/)
 - [Chrome Extension Manifest V3 Migration](https://developer.chrome.com/docs/extensions/migrating/to-service-workers/)
+- [Coolify vs Heroku vs Railway](https://coolify.io/)
+- [Hetzner vs DigitalOcean vs AWS Cost Comparison](https://www.hetzner.com/cloud)
 
 ---
 
@@ -263,7 +290,12 @@
 
 **For AI Integration:**
 - [OpenAI Cookbook](https://github.com/openai/openai-cookbook)
-- [Claude Prompt Engineering Guide](https://docs.anthropic.com/en/docs/prompt-engineering)
+- [Anthropic Claude Prompt Engineering Guide](https://docs.anthropic.com/en/docs/build-with-claude/prompt-engineering)
+
+**For Self-Hosting:**
+- [Coolify Getting Started](https://coolify.io/docs/introduction)
+- [Docker Compose for Development](https://docs.docker.com/compose/)
+- [Hetzner Cloud Best Practices](https://docs.hetzner.com/cloud/)
 
 ---
 

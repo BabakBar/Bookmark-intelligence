@@ -28,7 +28,7 @@
              │
 ┌────────────▼────────────────────────┐
 │      Backend API Server             │
-│      (FastAPI + Python 3.11+)       │
+│      (FastAPI + Python 3.13+)       │
 │   - Authentication                  │
 │   - Request Routing                 │
 │   - Real-time Processing            │
@@ -63,7 +63,7 @@
 1. User saves bookmark in browser
 2. Extension captures metadata (URL, title, DOM context)
 3. Backend generates embedding via OpenAI API
-4. AI generates summary + tags using Claude (real-time)
+4. AI generates summary + tags using Claude API (real-time)
 5. System suggests matching project
 6. Data stored in PostgreSQL + Vector DB
 7. User confirms/adjusts project assignment
@@ -71,8 +71,8 @@
 ### Batch Processing Flow (Daily/Weekly)
 
 1. Celery scheduled job collects unprocessed bookmarks
-2. Batch request submitted to Claude API (50% discount)
-3. Results returned within 24 hours
+2. Batch request submitted to Claude API or scheduled processing
+3. Results processed asynchronously
 4. Embeddings updated, clusters recalculated
 5. Ephemeral content processed → Google Docs
 6. Project contexts updated
@@ -144,15 +144,17 @@
 
 ### Backend API
 
-**Framework**: FastAPI 0.115+ (Python 3.11+)
+**Framework**: FastAPI 0.115+ (Python 3.13+)
 
 **Stack**:
-- **Server**: Uvicorn (ASGI server)
-- **Database ORM**: SQLAlchemy 2.0 (async)
-- **Migration Tool**: Alembic
-- **Validation**: Pydantic v2 (built-in with FastAPI)
+- **Server**: Uvicorn 0.32+ (ASGI server)
+- **Database ORM**: SQLAlchemy 2.0.36+ (async)
+- **Migration Tool**: Alembic 1.14+
+- **Validation**: Pydantic v2.10+ (built-in with FastAPI)
 - **Authentication**: FastAPI Security + JWT
 - **API Docs**: Auto-generated (Swagger UI / ReDoc)
+
+**Deployment**: Coolify (self-hosted on Hetzner VPS)
 
 **Project Structure**:
 ```
@@ -191,22 +193,25 @@
 
 ### Vector Database
 
-**Selected**: Qdrant 1.7+
+**Selected**: Qdrant 1.12+ (Self-Hosted)
 
-**Why**: Leading performance in 2025, excellent filtered search, open-source with cloud option, strong Python SDK
+**Deployment**: Docker container on Hetzner VPS via Coolify
+
+**Why**: Leading performance in 2025, excellent filtered search, fully open-source, strong Python SDK
 
 **Alternatives Considered**:
 - **Pinecone**: Excellent but proprietary/expensive (~$70/month)
 - **Milvus**: More complex setup, better for massive scale
 - **Chroma**: Simpler but less performant at scale
 - **Weaviate**: Good but larger resource footprint
+- **pgvector**: PostgreSQL extension, good backup option
 
 **Qdrant Advantages**:
 - High-performance filtered search (crucial for project filtering)
 - Hybrid search (vector + keyword)
 - Quantization support (reduce memory by 4x)
 - Excellent SDK and docs
-- Self-hostable or cloud ($0.50/GB/month)
+- Self-hostable with low resource footprint (2GB RAM)
 
 **Schema**:
 ```python
@@ -237,9 +242,11 @@
 
 ### Metadata Database
 
-**Selected**: PostgreSQL 16+
+**Selected**: PostgreSQL 17.x (Self-Hosted)
 
-**Why**: Industry standard, excellent JSONB support, pgvector extension available (backup option)
+**Deployment**: Docker container on Hetzner VPS via Coolify
+
+**Why**: Industry standard, excellent JSONB support, pgvector extension available (backup option), significant performance improvements in v17
 
 **Schema Design**:
 
@@ -317,7 +324,9 @@ CREATE TABLE bookmark_clusters (
 
 ### Job Queue & Task Scheduling
 
-**Selected**: Celery 5.3+ with Redis 7.x
+**Selected**: Celery 5.4+ with Redis 7.4.x (Self-Hosted)
+
+**Deployment**: Redis and Celery workers as Docker containers on Hetzner VPS via Coolify
 
 **Task Categories**:
 
@@ -377,31 +386,35 @@ app.conf.beat_schedule = {
 Cost: $0.0004/month
 ```
 
-#### Content Analysis: Claude Sonnet 4.5
+#### Content Analysis: Claude 3.5 Sonnet (Anthropic)
 
-**Model**: `claude-sonnet-4-20250514`
+**Model**: `claude-3-5-sonnet-20241022`
 
 **Pricing (Standard)**:
 - Input: $3 per 1M tokens
 - Output: $15 per 1M tokens
 
-**Pricing (Batch API - 50% discount)**:
-- Input: $1.50 per 1M tokens
-- Output: $7.50 per 1M tokens
-- Turnaround: 24 hours max
+**Alternative**: Claude 3.5 Haiku (5x cheaper, faster, slightly lower quality)
+- Input: $0.80 per 1M tokens
+- Output: $4.00 per 1M tokens
 
 **Real-Time (New Bookmark)**:
 ```
 Input: 500 tokens (bookmark content + prompt)
 Output: 150 tokens (summary + tags)
-Cost per bookmark: $0.00375
+Cost per bookmark (Sonnet): $0.00375
+Cost per bookmark (Haiku): $0.001
 ```
 
 **Batch Processing (Weekly - 40 bookmarks)**:
 ```
+Using Claude 3.5 Sonnet:
 Input: 20K tokens (40 × 500)
 Output: 6K tokens (40 × 150)
-Cost: $0.08 (vs $0.15 real-time, 47% savings)
+Cost: $0.15/week
+
+Using Claude 3.5 Haiku:
+Cost: $0.04/week (73% savings)
 ```
 
 ---
@@ -418,6 +431,193 @@ Cost: $0.08 (vs $0.15 real-time, 47% savings)
 - `chrome.bookmarks`: Bookmark CRUD
 - `chrome.storage`: Local data persistence
 - `chrome.sidePanel`: Sidebar UI (Manifest V3)
+
+---
+
+## Self-Hosted Deployment Architecture (Coolify)
+
+### Infrastructure
+
+**Hosting**: Hetzner VPS CX32
+- **RAM**: 8GB
+- **Storage**: 80GB SSD
+- **CPU**: 4 vCPU AMD
+- **Cost**: ~$13/month (€12.90)
+
+**Deployment Platform**: Coolify (open-source, self-hosted Heroku alternative)
+- Docker-based container orchestration
+- Built-in SSL/TLS (Let's Encrypt)
+- Zero-downtime deployments
+- Integrated monitoring and logs
+
+### Resource Allocation
+
+```
+Service                    RAM     Storage   Port(s)
+─────────────────────────────────────────────────────
+PostgreSQL 17              1.5GB   10GB      5432 (internal)
+Redis 7.4                  512MB   500MB     6379 (internal)
+Qdrant 1.12                2GB     5GB       6333 (internal)
+FastAPI Backend            1GB     2GB       8000 → 443 (public)
+Celery Worker              1GB     1GB       - (internal)
+Celery Beat                256MB   500MB     - (internal)
+Nginx (Coolify proxy)      256MB   1GB       80, 443 (public)
+Coolify + Docker           1GB     5GB       8000 (admin)
+OS (Ubuntu 24.04)          512MB   10GB      -
+─────────────────────────────────────────────────────
+TOTAL                      8GB     35GB
+REMAINING BUFFER           0GB     45GB
+```
+
+### Coolify Services Configuration
+
+#### 1. PostgreSQL
+```yaml
+image: postgres:17-alpine
+environment:
+  POSTGRES_DB: bookmarkai
+  POSTGRES_USER: bookmarkuser
+  POSTGRES_PASSWORD: ${DB_PASSWORD}
+volumes:
+  - postgresql_data:/var/lib/postgresql/data
+networks:
+  - internal
+```
+
+#### 2. Redis
+```yaml
+image: redis:7.4-alpine
+command: redis-server --maxmemory 512mb --maxmemory-policy allkeys-lru
+volumes:
+  - redis_data:/data
+networks:
+  - internal
+```
+
+#### 3. Qdrant
+```yaml
+image: qdrant/qdrant:v1.12
+environment:
+  QDRANT__SERVICE__ENABLE_CORS: "false"
+volumes:
+  - qdrant_storage:/qdrant/storage
+networks:
+  - internal
+```
+
+#### 4. FastAPI Backend
+```yaml
+build: ./backend
+environment:
+  DATABASE_URL: postgresql+asyncpg://user:pass@postgresql:5432/bookmarkai
+  REDIS_URL: redis://redis:6379/0
+  QDRANT_URL: http://qdrant:6333
+  OPENAI_API_KEY: ${OPENAI_API_KEY}
+  ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+domains:
+  - api.bookmarkai.yourdomain.com
+networks:
+  - public
+  - internal
+healthcheck:
+  path: /health
+  interval: 30s
+```
+
+#### 5. Celery Worker & Beat
+```yaml
+worker:
+  build: ./backend
+  command: celery -A app.tasks worker --loglevel=info --concurrency=2
+  environment: [same as backend]
+  networks:
+    - internal
+
+beat:
+  build: ./backend
+  command: celery -A app.tasks beat --loglevel=info
+  environment: [same as backend]
+  networks:
+    - internal
+  replicas: 1  # Singleton
+```
+
+### Network Architecture
+
+```
+Internet
+   │
+   ├─→ :443 (HTTPS) ─→ Nginx (Coolify Proxy) ─→ FastAPI Backend
+   │                                              ↓
+   └─→ :8000 (Admin) ─→ Coolify Dashboard        Internal Network
+                                                  ├─→ PostgreSQL :5432
+                                                  ├─→ Redis :6379
+                                                  ├─→ Qdrant :6333
+                                                  ├─→ Celery Worker
+                                                  └─→ Celery Beat
+```
+
+**Security**:
+- Only ports 80, 443, and 8000 (restricted) exposed to internet
+- All databases on internal Docker network only
+- SSL/TLS certificates auto-renewed via Let's Encrypt
+- Environment secrets stored in Coolify vault
+
+### Performance Optimizations
+
+**PostgreSQL** (1.5GB RAM):
+```sql
+shared_buffers = 512MB
+effective_cache_size = 1GB
+work_mem = 8MB
+max_connections = 100
+```
+
+**Qdrant** (2GB RAM with quantization):
+```yaml
+storage:
+  on_disk_payload: true    # Store metadata on disk
+quantization:
+  scalar:
+    type: int8             # 4x memory reduction
+    always_ram: false
+```
+
+**Redis** (512MB):
+```conf
+maxmemory 512mb
+maxmemory-policy allkeys-lru
+io-threads 2
+```
+
+### Backup Strategy
+
+**Automated Daily Backups** (via Coolify or custom script):
+```bash
+# PostgreSQL
+pg_dump bookmarkai | gzip > /backups/db-$(date +%Y%m%d).sql.gz
+
+# Qdrant snapshots
+curl -X POST http://localhost:6333/collections/bookmarks/snapshots
+
+# Upload to Hetzner Storage Box or S3-compatible
+rclone sync /backups remote:bookmarkai-backups/
+
+# Retention: 7 daily, 4 weekly, 6 monthly
+```
+
+### Cost Comparison: Self-Hosted vs Cloud
+
+| Component | Cloud (Monthly) | Self-Hosted | Savings |
+|-----------|----------------|-------------|---------|
+| Compute (Cloud Run) | $100 | $0 | $100 |
+| Qdrant Cloud | $50 | $0 | $50 |
+| PostgreSQL (Supabase) | $25 | $0 | $25 |
+| Redis (Upstash) | $10 | $0 | $10 |
+| **Infrastructure Total** | **$185** | **$13** (VPS) | **$172/mo** |
+| **Annual Savings** | | | **$2,064/year** |
+
+*AI costs (OpenAI/Anthropic) remain the same in both scenarios*
 
 ---
 

@@ -48,7 +48,7 @@ Cloud engineers, software developers, and knowledge workers managing 500+ bookma
 ┌──▼────────────┐  ┌──▼──────────────┐
 │  Job Queue    │  │  AI Processing  │
 │  (Celery +    │  │  Layer          │
-│   Redis)      │  │  - Claude API   │
+│   Redis)      │  │  - chatgpt API   │
 │               │  │  - OpenAI Embed │
 └───────────────┘  └─────────────────┘
                           │
@@ -69,14 +69,14 @@ Cloud engineers, software developers, and knowledge workers managing 500+ bookma
 1. User saves bookmark in browser
 2. Extension captures metadata (URL, title, DOM context)
 3. Backend generates embedding via OpenAI API
-4. AI generates summary + tags using Claude (real-time)
+4. AI generates summary + tags using chatgpt (real-time)
 5. System suggests matching project
 6. Data stored in PostgreSQL + Vector DB
 7. User confirms/adjusts project assignment
 
 #### Batch Processing Flow (Daily/Weekly)
 1. Celery scheduled job collects unprocessed bookmarks
-2. Batch request submitted to Claude API (50% discount)
+2. Batch request submitted to chatgpt API (50% discount)
 3. Results returned within 24 hours
 4. Embeddings updated, clusters recalculated
 5. Ephemeral content processed → Google Docs
@@ -139,7 +139,7 @@ AI automatically analyzes bookmark content to generate semantic tags and cluster
 
 **User Flow:**
 1. User saves article: "Getting Started with Terraform on AWS"
-2. Real-time: Claude generates tags in 2-3 seconds
+2. Real-time: chatgpt generates tags in 2-3 seconds
    - Tags: `#terraform`, `#aws`, `#infrastructure-as-code`, `#devops`
    - Content type: `tutorial`
    - Difficulty: `beginner`
@@ -245,7 +245,7 @@ Project {
 **Priority:** P1 (Post-MVP)
 
 **Description:**  
-Natural language search interface allowing users to query their bookmark library conversationally. Powered by semantic search + Claude for query understanding.
+Natural language search interface allowing users to query their bookmark library conversationally. Powered by semantic search + chatgpt for query understanding.
 
 **Example Queries:**
 ```
@@ -263,8 +263,8 @@ System: [Generates comparison table of 4 tutorials]
 ```
 
 **Technical Architecture:**
-1. User query → Claude API for intent extraction
-2. Claude returns structured search parameters:
+1. User query → chatgpt API for intent extraction
+2. chatgpt returns structured search parameters:
    ```json
    {
      "keywords": ["docker", "tutorial"],
@@ -277,7 +277,7 @@ System: [Generates comparison table of 4 tutorials]
    - Vector search on query embedding (semantic)
    - Metadata filters (date, tags, project)
 4. Results ranked by relevance score
-5. Optional: Claude summarizes results
+5. Optional: chatgpt summarizes results
 
 **Technical Requirements:**
 - Query latency: <2 seconds (p95)
@@ -303,7 +303,7 @@ Special handling for "read later" content like tweets and Reddit posts. System a
 2. System marks bookmark as `ephemeral=true`
 3. Daily batch job runs:
    - Fetches tweet content via API/scraping
-   - Claude extracts key insights (2-3 bullet points)
+   - chatgpt extracts key insights (2-3 bullet points)
    - Appends to user's Google Doc: "Tech Insights - October 2025"
    - Marks bookmark as `processed=true`
 4. After 30 days, processed ephemeral bookmarks auto-delete
@@ -780,9 +780,9 @@ Cost: $0.003/month
 
 ---
 
-#### 3.6.2 Content Analysis: Claude Sonnet 4.5
+#### 3.6.2 Content Analysis: chatgpt Sonnet 4.5
 
-**Model:** `claude-sonnet-4-20250514`  
+**Model:** `chatgpt-sonnet-4-20250514`  
 **Why:** Best coding/analysis model, excellent instruction following, 50% batch discount
 
 **Pricing (Standard):**
@@ -943,8 +943,8 @@ Cost: $0.131 (vs $0.262 real-time, 50% savings)
 
 ### Phase 2: Intelligence Layer (Weeks 5-8)
 
-**Week 5: Claude Integration**
-- Claude API client
+**Week 5: chatgpt Integration**
+- chatgpt API client
 - Summary generation
 - Tag refinement
 - Content type classification
@@ -1036,15 +1036,15 @@ Cost: $0.131 (vs $0.262 real-time, 50% savings)
 | Service | Usage | Cost |
 |---------|-------|------|
 | **OpenAI Embeddings** | 40 bookmarks × 500 tokens | $0.0004 |
-| **Claude API (Real-time)** | 40 bookmarks/month × $0.00375 | $0.15 |
-| **Claude API (Batch)** | Weekly processing (~40 bookmarks) | $0.08 |
+| **chatgpt API (Real-time)** | 40 bookmarks/month × $0.00375 | $0.15 |
+| **chatgpt API (Batch)** | Weekly processing (~40 bookmarks) | $0.08 |
 | **Qdrant Cloud** | 1GB storage | $0.50 |
 | **PostgreSQL (Supabase)** | Free tier | $0 |
 | **Redis (Upstash)** | Free tier | $0 |
 | **Total** | | **~$0.73/month** |
 
 **With Optimizations:**
-- Batch-only processing (no real-time Claude): Saves $0.15/month → **$0.58/month**
+- Batch-only processing (no real-time chatgpt): Saves $0.15/month → **$0.58/month**
 - Prompt caching (90% discount on repeated prompts): Additional ~$0.10 savings → **$0.48/month**
 
 **Scalability:**
@@ -1173,7 +1173,7 @@ Cost: $0.131 (vs $0.262 real-time, 50% savings)
 ### 10.2 Product Decisions
 - [ ] **Freemium Model?** Free tier (100 bookmarks) + Pro ($5/month)?
 - [ ] **Ephemeral Content:** Google Docs only, or support Notion/Obsidian?
-- [ ] **AI Model Choice:** Claude Sonnet 4.5 vs. Haiku 4.5 for batch jobs?
+- [ ] **AI Model Choice:** chatgpt Sonnet 4.5 vs. Haiku 4.5 for batch jobs?
 
 ### 10.3 Go-to-Market
 - [ ] **Target Audience:** Developers only, or broader knowledge workers?
@@ -1200,12 +1200,12 @@ Cost: $0.131 (vs $0.262 real-time, 50% savings)
 - [FastAPI Documentation](https://fastapi.tiangolo.com/)
 - [Qdrant Documentation](https://qdrant.tech/documentation/)
 - [OpenAI Embeddings Guide](https://platform.openai.com/docs/guides/embeddings)
-- [Claude API Documentation](https://docs.anthropic.com/)
+- [chatgpt API Documentation](https://docs.anthropic.com/)
 
 ### Tech Stack Rationale
 - [FastAPI vs Flask vs Django (2025)](https://blog.jetbrains.com/pycharm/2025/02/django-flask-fastapi/)
 - [Top Vector Databases 2025](https://www.datacamp.com/blog/the-top-5-vector-databases)
-- [Claude Batch API Pricing](https://docs.anthropic.com/en/docs/about-claude/pricing)
+- [chatgpt Batch API Pricing](https://docs.anthropic.com/en/docs/about-chatgpt/pricing)
 - [OpenAI Embedding Model Comparison](https://openai.com/index/new-embedding-models-and-api-updates/)
 
 ---
