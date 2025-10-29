@@ -1,0 +1,24 @@
+# Bookmark Intelligence Configuration
+
+# File paths
+paths:
+  raw: data/raw
+  processed: data/processed
+  reports: data/reports
+
+# Input file pattern
+input:
+  pattern: "bookmarks_*.html"
+  date_format: "%d_%m_%Y"
+
+# Output files
+output:
+  hierarchical: bookmarks_clean.json
+  flat: bookmarks_flat.json
+  markdown: bookmarks_clean.md
+
+# Logging configuration
+logging:
+  level: INFO  # DEBUG, INFO, WARNING, ERROR
+  debug_parsing: false  # Enable verbose parse debugging
+  format: "%(levelname)s - %(name)s - %(message)s"

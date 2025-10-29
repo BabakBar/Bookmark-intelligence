@@ -28,7 +28,7 @@
 
 ### Next: Implementation Tasks (Starting Oct 28, 2025)
 
-**Run**: `/speckit.tasks` to generate detailed task breakdown
+**Run**: generate detailed task breakdown
 
 **Expected**: `specs/002-bootstrap-import/tasks.md` with:
 - Week 1 tasks: Infrastructure setup (Docker, PostgreSQL, Qdrant, Valkey) + Import API

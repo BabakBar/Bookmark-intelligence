@@ -1,0 +1,49 @@
+# Domain extraction and categorization rules
+
+domain:
+  # Normalization settings
+  normalize_www: true
+  lowercase: true
+
+  # Domain → Category mapping
+  # Used for analysis and insights generation
+  categories:
+    code_repos:
+      - github.com
+      - gitlab.com
+      - bitbucket.org
+
+    documentation:
+      - docs.python.org
+      - developer.mozilla.org
+      - learn.microsoft.com
+      - nodejs.org
+      - vuejs.org
+      - react.dev
+
+    video:
+      - youtube.com
+      - vimeo.com
+      - loom.com
+
+    social:
+      - x.com
+      - twitter.com
+      - linkedin.com
+      - reddit.com
+
+    google_services:
+      - mail.google.com
+      - docs.google.com
+      - drive.google.com
+      - console.cloud.google.com
+      - analytics.google.com
+      - sheets.google.com
+
+    productivity:
+      - notion.so
+      - miro.com
+      - figma.com
+      - trello.com
+      - asana.com
+      - slack.com
