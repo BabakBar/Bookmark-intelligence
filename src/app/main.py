@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 from .api.v1.endpoints import import_bookmarks
 
 app = FastAPI(
@@ -22,8 +23,16 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/health")
+
+@app.get("/")
 def read_root():
+    return {"message": "Welcome to BookmarkAI API"}
+
+
+@app.get("/health")
+def read_health():
     return {"status": "ok"}
 
+
+app.include_router(import_bookmarks.router, prefix="/api/v1/import", tags=["v1"])
 app.include_router(import_bookmarks.router, prefix="/api/v1/import", tags=["v1"])
