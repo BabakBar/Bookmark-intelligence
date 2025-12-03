@@ -16,9 +16,9 @@ python --version  # Should be >= 3.13
 docker --version
 docker-compose --version
 
-# Node.js 20+ & npm (for frontend)
+# Node.js 20+ & bun (for frontend)
 node --version  # Should be >= 20
-npm --version
+bun --version
 
 # Git
 git --version
@@ -171,13 +171,13 @@ psql postgresql://bookmarkuser:devpass123@localhost:5432/bookmarkai -c "\dt"
 cd ../frontend
 
 # Initialize React + Vite project (if not exists)
-npm create vite@latest . -- --template react-ts
+bun create vite . --template react-ts
 
 # Install dependencies
-npm install
-npm install @tanstack/react-query axios react-router-dom
-npm install -D tailwindcss postcss autoprefixer
-npm install @headlessui/react @heroicons/react
+bun install
+bun add @tanstack/react-query axios react-router-dom
+bun add -D tailwindcss postcss autoprefixer
+bun add @headlessui/react @heroicons/react
 
 # Initialize Tailwind
 npx tailwindcss init -p
@@ -220,7 +220,7 @@ celery -A app.tasks.celery_app worker --loglevel=info --concurrency=2
 cd frontend
 
 # Run Vite dev server
-npm run dev
+bun run dev
 ```
 
 **Verify**: Open http://localhost:3000 (React app)
@@ -342,7 +342,7 @@ pytest tests/ -v
 
 # Frontend tests
 cd frontend
-npm test
+bun test
 ```
 
 ### Database Management

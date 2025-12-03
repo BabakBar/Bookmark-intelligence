@@ -1,35 +1,80 @@
-# Quick Start
+# Quick Start Guide
 
-1. **Start Infrastructure**  
-Run PostgreSQL, Qdrant, and Valkey:
-
+## 1. Start Infrastructure
 ```bash
 docker compose up -d
 ```
 
-2. **Run Backend**  
-Set up and start the FastAPI server:
-
+## 2. Setup Backend
 ```bash
+# Create and activate virtual environment
 uv venv
-source .venv/bin/activate
+source .venv/bin/activate  # macOS/Linux
+# .venv\Scripts\activate   # Windows
+
+# Install dependencies and run migrations
 uv pip install -e ".[dev]"
-uvicorn src.app.main:app --reload --port 8000
+alembic upgrade head
+
+# Start server
+uvicorn src.app.main:app --reload
 ```
 
-3. **Run Frontend**  
-Set up and start the React app:
-
+## 3. Setup Frontend
 ```bash
 cd frontend
-npm install  # or bun install
-npm run dev  # or bun run dev
+bun install
+bun run dev
 ```
 
-## Test It
+## 4. Test It
+1. Open `http://localhost:5173`
+2. Upload `tests/fixtures/sample_bookmarks.html`
+3. See imported bookmarks appear
 
-- Open `http://localhost:5173` in your browser.
-- Upload a bookmarks HTML file (e.g., `tests/fixtures/sample_bookmarks.html`).
-- Verify parsed bookmarks appear on the page.
+**Done!** Your full-stack app is now running.
 
-The app is now running with full-stack functionality.
+---
+
+## Quick Commands Reference
+
+### Start Everything
+```bash
+docker compose up -d && \
+source .venv/bin/activate && \
+uvicorn src.app.main:app --reload & \
+cd frontend && bun run dev
+```
+
+### Stop Everything
+```bash
+docker compose down
+pkill -f uvicorn
+pkill -f vite
+```
+
+### Reset Database
+```bash
+alembic downgrade base && alembic upgrade head
+```
+
+### Run Tests
+```bash
+pytest tests/ -v
+```
+
+---
+
+## URLs
+- **Frontend**: http://localhost:5173
+- **Backend API**: http://localhost:8000
+- **API Docs**: http://localhost:8000/docs
+
+---
+
+## Next Steps
+- Import your browser bookmarks
+- Check database: `docker compose exec postgres psql -U user bookmarkai -c "SELECT COUNT(*) FROM bookmarks;"`
+- Explore API documentation at `/docs`
+
+For detailed setup or troubleshooting, see the original documentation.
