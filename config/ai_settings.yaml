@@ -1,0 +1,23 @@
+# AI Processing Configuration
+
+openai:
+  # Embedding model
+  embedding_model: text-embedding-3-large
+  dimensions: 1536
+  batch_api_enabled: true
+
+  # Tagging/summarization model
+  tagging_model: gpt-5.2
+  max_tokens: 600  # Increased for comprehensive analysis
+  temperature: 0.3
+
+clustering:
+  min_clusters: 8
+  max_clusters: 15
+  method: minibatch_kmeans
+  batch_size: 100
+  random_state: 42
+
+project_suggestion:
+  min_confidence: 0.7
+  max_projects: 5

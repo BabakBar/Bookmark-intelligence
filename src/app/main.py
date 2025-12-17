@@ -8,7 +8,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from src.app.api.v1.endpoints import import_bookmarks
+from src.app.api.v1.endpoints import ai_processing, import_bookmarks
 from src.app.core.config import settings
 from src.app.core.database import dispose_db, engine
 
@@ -86,4 +86,9 @@ app.include_router(
     import_bookmarks.router,
     prefix=f"{settings.api_v1_prefix}/import",
     tags=["Import"],
+)
+app.include_router(
+    ai_processing.router,
+    prefix=f"{settings.api_v1_prefix}/ai",
+    tags=["AI Processing"],
 )
