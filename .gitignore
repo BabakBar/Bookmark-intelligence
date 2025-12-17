@@ -29,3 +29,4 @@ Thumbs.db
 .venv/
 __pycache__/
 *.pyc
+docs/sia.txt

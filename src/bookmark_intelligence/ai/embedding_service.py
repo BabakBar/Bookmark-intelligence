@@ -234,9 +234,16 @@ class OpenAIEmbeddingService:
         """
         total_tokens = num_bookmarks * avg_tokens
 
-        # text-embedding-3-small: $0.020 per 1M tokens
+        # Pricing per 1M tokens (as of Dec 2025)
+        # text-embedding-3-small: $0.020
+        # text-embedding-3-large: $0.130
+        pricing = {
+            "text-embedding-3-small": 0.020,
+            "text-embedding-3-large": 0.130,
+        }
+        base_cost_per_1m = pricing.get(self.embedding_model, 0.130)
+
         # Batch API: 50% discount
-        base_cost_per_1m = 0.020
         batch_discount = 0.5 if self.batch_api_enabled else 1.0
 
         cost = (total_tokens / 1_000_000) * base_cost_per_1m * batch_discount

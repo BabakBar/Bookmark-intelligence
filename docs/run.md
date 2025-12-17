@@ -36,6 +36,99 @@ npm run dev  # or bun run dev
 
 ---
 
+## AI + Bookmark Processing Pipelines (CLI)
+
+These pipelines write files under `data/processed/`, `data/ai/`, and `data/reports/`.
+
+### 1) Offline Bookmark Processing (Dry Run)
+Runs entirely locally (no OpenAI required) using the sample fixture:
+
+```bash
+uv run scripts/process_bookmarks.py --input tests/fixtures/sample_bookmarks.html
+```
+
+Expected outputs:
+- `data/processed/bookmarks_flat.json`
+- `data/processed/bookmarks_clean.json`
+- `data/processed/bookmarks_clean.md`
+
+### 2) AI Tagging Only (Cheap Dry Run)
+Useful to validate prompts + 12-field outputs without waiting for embeddings/clustering.
+
+1) Ensure you have `OPENAI_API_KEY` set (copy `.env.example` → `.env` if you use dotenv tooling).
+2) Create a small input file (first 20 bookmarks):
+
+```bash
+python - <<'PY'
+import json
+from pathlib import Path
+
+src = Path("data/processed/bookmarks_flat.json")
+dst = Path("data/processed/bookmarks_flat_small.json")
+
+bookmarks = json.loads(src.read_text())
+dst.write_text(json.dumps(bookmarks[:20], indent=2))
+print(f"Wrote {dst} ({min(20, len(bookmarks))} bookmarks)")
+PY
+```
+
+3) Run tagging stage only:
+
+```bash
+uv run scripts/process_ai.py --input data/processed/bookmarks_flat_small.json --stage tag
+```
+
+Expected output:
+- `data/ai/bookmarks_tagged.json` (intermediate list of enriched bookmarks)
+
+Optional: verify all 12 AI fields exist (and are non-empty where required):
+
+```bash
+python - <<'PY'
+import json
+from pathlib import Path
+
+required = {
+  "tags", "summary", "content_type", "primary_technology", "skill_level",
+  "use_cases", "key_topics", "value_proposition", "folder_recommendation",
+  "priority", "related_keywords", "actionability",
+}
+
+bookmarks = json.loads(Path("data/ai/bookmarks_tagged.json").read_text())
+bad = []
+for i, b in enumerate(bookmarks):
+    missing = sorted(required - set(b.keys()))
+    if missing:
+        bad.append((i, missing))
+
+print(f"bookmarks: {len(bookmarks)}")
+print(f"missing-required: {len(bad)}")
+if bad:
+    print("first-bad:", bad[0])
+PY
+```
+
+### 3) Full AI Pipeline (Embeddings + Tagging + Clustering)
+This uses the OpenAI Batch API for embeddings and can take time (batch completion window is up to 24 hours).
+
+```bash
+uv run scripts/process_ai.py --stage all
+```
+
+If you need to resume a finished/ongoing embedding batch:
+
+```bash
+uv run scripts/process_ai.py --stage embed --batch-id "$(cat data/ai/batch_id.txt)"
+```
+
+Expected outputs:
+- `data/ai/embeddings.npy`
+- `data/ai/clusters.json`
+- `data/ai/projects_suggested.json`
+- `data/ai/folder_recommendations.json`
+- `data/ai/bookmarks_ai.json`
+- `data/reports/YYYY-MM-DD-ai-processing.md`
+
 ## Quick Commands Reference
 
 ### Start Everything

@@ -1,15 +1,16 @@
 # AI Processing Configuration
 
 openai:
-  # Embedding model
+  # Embedding model (best accuracy)
   embedding_model: text-embedding-3-large
-  dimensions: 1536
+  dimensions: 3072  # Full dimensions for maximum accuracy
+  encoding_format: float
   batch_api_enabled: true
 
   # Tagging/summarization model
   tagging_model: gpt-5.2
-  max_tokens: 600  # Increased for comprehensive analysis
-  temperature: 0.3
+  max_tokens: 600
+  temperature: 0.3  # Low temperature for consistent, focused outputs
 
 clustering:
   min_clusters: 8
