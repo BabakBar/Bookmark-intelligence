@@ -23,8 +23,8 @@ uvicorn src.app.main:app --reload
 ## 3. Setup Frontend
 ```bash
 cd frontend
-bun install
-bun run dev
+npm install  # or bun install
+npm run dev  # or bun run dev
 ```
 
 ## 4. Test It
