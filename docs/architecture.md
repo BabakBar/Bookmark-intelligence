@@ -58,6 +58,29 @@
 
 ## Data Flows
 
+### Current Phase 0: Dev/Cld Local-First Workspace
+
+The current implemented frontend path is local-first and focused on making the large `Dev` and `Cld` folders maintainable before backend sync or AI enrichment.
+
+1. User imports a browser bookmark HTML export in the frontend.
+2. The browser parses the Netscape bookmark HTML format with `DOMParser`.
+3. Each bookmark URL is canonicalized to remove fragments, common tracking params, `www.`, duplicate query order, and trailing path slash variants.
+4. Provider, topic, content type, and review priority are inferred locally from title, URL, domain, and folder path.
+5. Retained bookmark records are upserted into IndexedDB via Dexie using `canonicalUrl` as the primary key.
+6. Review state, status, user tags, notes, keep reason, first seen timestamp, merged folder context, and inferred metadata persist across later imports.
+7. The Dev/Cld workspace renders live from IndexedDB:
+   - faceted explorer table via TanStack Table
+   - filtered mind map via React Flow
+   - duplicate/canonical review for multi-folder records and URL variants
+   - review queue ordered by merge risk, time sensitivity, and durable reference value
+   - saved views for recurring filter workflows
+   - bookmark detail panel with retention controls
+   - JSON backup export/restore for local review state, user tags, saved views, and import history
+
+This path currently produces 912 retained canonical records from the 936 raw bookmark instances in `bookmarks_06_07_2026.html`. `Dev + Cld` contains 540 retained canonical records after normalization.
+
+Implementation note: [Dev/Cld Local-First Workspace](dev/implementation/2026-07-06-devcld-local-workspace.md)
+
 ### Phase 0: Bootstrap Import Flow (One-Time)
 
 **Initial Setup for Existing Bookmarks**

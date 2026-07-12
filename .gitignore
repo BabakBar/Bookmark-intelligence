@@ -15,6 +15,11 @@ bookmarks_clean.md
 bookmarks_clean.json
 bookmarks_flat.json
 
+# Frontend generated output
+frontend/node_modules/
+frontend/test-results/
+frontend/playwright-report/
+
 # IDE
 .vscode/
 .idea/

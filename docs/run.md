@@ -23,16 +23,30 @@ uvicorn src.app.main:app --reload
 ## 3. Setup Frontend
 ```bash
 cd frontend
-npm install  # or bun install
-npm run dev  # or bun run dev
+bun install
+bun run dev
 ```
 
-## 4. Test It
+## 4. Use the Dev/Cld Live Workspace
 1. Open `http://localhost:5173`
-2. Upload `tests/fixtures/sample_bookmarks.html`
-3. See imported bookmarks appear
+2. Import a browser bookmark HTML export, for example `bookmarks_06_07_2026.html`
+3. Use the `Dev + Cld`, `Dev`, and `Cld` scopes to review the large folders
+4. Use folder/domain/topic/provider/content/review/status filters to narrow the table
+5. Switch to `Mind Map` for a filtered graph of roots, folders, domains, and focused bookmarks
+6. Switch to `Duplicates` to review canonical URL merges, URL variants, and multi-folder records
+7. Switch to `Review Queue` for prioritized cleanup by merge risk, certification/interview urgency, and durable references
+8. Select a bookmark to set review state, status, user tags, keep reason, and notes
+9. Save recurring filter sets as views, for example `AWS cert cleanup`
+10. Use `Export backup` to download local review state, tags, saved views, and imports as JSON before clearing data or changing browsers
+11. Use `Restore backup` to merge a previous workspace backup back into IndexedDB
 
-**Done!** Your full-stack app is now running.
+The current frontend stores retained records locally in IndexedDB. Re-importing newer exports updates records by canonical URL and preserves review state, notes, and keep reasons.
+
+The frontend also infers local metadata without AI calls: topics, provider, content type, and review priority. These are heuristics for fast triage and can be replaced or supplemented by AI later.
+
+For the July 2026 export, the importer keeps 912 canonical records from 936 raw bookmark instances. `Dev + Cld` becomes 540 retained records after URL normalization.
+
+**Done!** The local-first Dev/Cld workspace is running.
 
 ---
 
@@ -153,7 +167,9 @@ alembic downgrade base && alembic upgrade head
 
 ### Run Tests
 ```bash
-pytest tests/ -v
+uv run --extra dev pytest -q
+cd frontend && bun run lint && bun run build
+cd frontend && bunx playwright test e2e/devcld-workspace.spec.js
 ```
 
 ---
