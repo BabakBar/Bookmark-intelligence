@@ -1,25 +1,30 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useMemo, useState } from 'react'
-import BookmarkMap from './BookmarkMap'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
+import Briefing from './Briefing'
 import BookmarkTable from './BookmarkTable'
 import DuplicateReview from './DuplicateReview'
 import ReviewQueue from './ReviewQueue'
 import { importBookmarkFile } from './bookmarkImport'
-import { deriveBookmarkMetadata } from './bookmarkSignals'
+import { BOOKMARK_SIGNAL_VERSION, deriveBookmarkMetadata } from './bookmarkSignals'
 import {
   REVIEW_STATES,
   STATUSES,
+  applyBulkReviewAction,
   clearWorkspace,
   deleteSavedView,
   db,
   exportWorkspaceData,
   importWorkspaceData,
+  recordBookmarkOpen,
   saveView,
+  undoBulkReviewAction,
   updateBookmark,
 } from './db'
 import './App.css'
 
-const ROOT_OPTIONS = ['Dev + Cld', 'Dev', 'Cld']
+const BookmarkMap = lazy(() => import('./BookmarkMap'))
+const ROOT_OPTIONS = ['All Memory', 'Dev + Cld', 'Dev', 'Cld']
+const MAX_BACKUP_FILE_BYTES = 25 * 1024 * 1024
 
 function folderLabel(bookmark) {
   return bookmark.originalFolders?.[0] || 'Root'
@@ -37,6 +42,7 @@ function formatDate(value) {
 }
 
 function matchesRoot(bookmark, rootFilter) {
+  if (rootFilter === 'All Memory') return true
   if (rootFilter === 'Dev + Cld') {
     return bookmark.rootFolders?.includes('Dev') || bookmark.rootFolders?.includes('Cld')
   }
@@ -125,7 +131,12 @@ function BookmarkDetail({ bookmark }) {
       <div>
         <p className="eyebrow">Selected Bookmark</p>
         <h2>{bookmark.title}</h2>
-        <a href={bookmark.url} rel="noreferrer" target="_blank">
+        <a
+          href={bookmark.url}
+          onClick={() => recordBookmarkOpen(bookmark.canonicalUrl)}
+          rel="noreferrer"
+          target="_blank"
+        >
           Open bookmark
         </a>
       </div>
@@ -223,7 +234,7 @@ export default function App() {
   const bookmarks = useLiveQuery(() => db.bookmarks.toArray(), [], [])
   const imports = useLiveQuery(() => db.imports.orderBy('importedAt').reverse().toArray(), [], [])
   const savedViews = useLiveQuery(() => db.savedViews.orderBy('updatedAt').reverse().toArray(), [], [])
-  const [rootFilter, setRootFilter] = useState('Dev + Cld')
+  const [rootFilter, setRootFilter] = useState('All Memory')
   const [domainFilter, setDomainFilter] = useState('All domains')
   const [folderFilter, setFolderFilter] = useState('All folders')
   const [reviewFilter, setReviewFilter] = useState('All review states')
@@ -233,8 +244,10 @@ export default function App() {
   const [contentTypeFilter, setContentTypeFilter] = useState('All content types')
   const [userTagFilter, setUserTagFilter] = useState('All user tags')
   const [query, setQuery] = useState('')
-  const [activeView, setActiveView] = useState('explorer')
+  const [activeView, setActiveView] = useState('briefing')
   const [selectedUrl, setSelectedUrl] = useState('')
+  const [bulkSelectedUrls, setBulkSelectedUrls] = useState([])
+  const [bulkUndo, setBulkUndo] = useState(null)
   const [importMessage, setImportMessage] = useState('')
   const [isImporting, setIsImporting] = useState(false)
   const [savedViewName, setSavedViewName] = useState('')
@@ -250,7 +263,8 @@ export default function App() {
         !Array.isArray(bookmark.topics) ||
         !bookmark.provider ||
         !bookmark.contentType ||
-        !bookmark.reviewPriority,
+        !bookmark.reviewPriority ||
+        bookmark.signalVersion !== BOOKMARK_SIGNAL_VERSION,
     )
 
     if (stale.length === 0) return
@@ -389,7 +403,18 @@ export default function App() {
   )
 
   const selectedBookmark =
-    bookmarks.find((bookmark) => bookmark.canonicalUrl === selectedUrl) || filteredBookmarks[0]
+    bookmarks.find((bookmark) => bookmark.canonicalUrl === selectedUrl) || null
+  const selectedUrlSet = useMemo(
+    () => new Set(bulkSelectedUrls),
+    [bulkSelectedUrls],
+  )
+  const visibleBulkSelection = useMemo(
+    () =>
+      filteredBookmarks
+        .map((bookmark) => bookmark.canonicalUrl)
+        .filter((canonicalUrl) => selectedUrlSet.has(canonicalUrl)),
+    [filteredBookmarks, selectedUrlSet],
+  )
 
   const stats = useMemo(() => {
     const devCount = bookmarks.filter((bookmark) => bookmark.rootFolders?.includes('Dev')).length
@@ -463,6 +488,9 @@ export default function App() {
     setImportMessage('')
 
     try {
+      if (file.size > MAX_BACKUP_FILE_BYTES) {
+        throw new Error('Workspace backup is larger than the 25 MB safety limit.')
+      }
       const data = JSON.parse(await file.text())
       const result = await importWorkspaceData(data)
       setImportMessage(
@@ -479,7 +507,7 @@ export default function App() {
   function applySavedView(view) {
     const filters = view.filters || {}
 
-    setRootFilter(filters.rootFilter || 'Dev + Cld')
+    setRootFilter(filters.rootFilter || 'All Memory')
     setDomainFilter(filters.domainFilter || 'All domains')
     setFolderFilter(filters.folderFilter || 'All folders')
     setReviewFilter(filters.reviewFilter || 'All review states')
@@ -502,12 +530,65 @@ export default function App() {
     }
   }
 
+  function toggleBulkSelection(canonicalUrl) {
+    setBulkSelectedUrls((current) =>
+      current.includes(canonicalUrl)
+        ? current.filter((url) => url !== canonicalUrl)
+        : [...current, canonicalUrl],
+    )
+    setBulkUndo(null)
+  }
+
+  function toggleAllFiltered(checked) {
+    const visibleUrls = filteredBookmarks.map(
+      (bookmark) => bookmark.canonicalUrl,
+    )
+    setBulkSelectedUrls((current) => {
+      const next = new Set(current)
+      for (const canonicalUrl of visibleUrls) {
+        if (checked) next.add(canonicalUrl)
+        else next.delete(canonicalUrl)
+      }
+      return [...next]
+    })
+    setBulkUndo(null)
+  }
+
+  async function handleBulkReview(action) {
+    try {
+      const result = await applyBulkReviewAction(visibleBulkSelection, action)
+      setBulkUndo(result)
+      setBulkSelectedUrls([])
+      setImportMessage(
+        `Updated ${result.count} bookmark${result.count === 1 ? '' : 's'} to ${action}.`,
+      )
+    } catch (error) {
+      setImportMessage(
+        error instanceof Error ? error.message : 'Bulk review failed.',
+      )
+    }
+  }
+
+  async function handleBulkUndo() {
+    try {
+      const count = await undoBulkReviewAction(bulkUndo?.snapshots)
+      setBulkUndo(null)
+      setImportMessage(
+        `Restored ${count} bookmark${count === 1 ? '' : 's'} to the previous review state.`,
+      )
+    } catch (error) {
+      setImportMessage(
+        error instanceof Error ? error.message : 'Bulk undo failed.',
+      )
+    }
+  }
+
   return (
     <main className="app-shell">
       <section className="topbar">
         <div>
-          <p className="eyebrow">Bookmark Intelligence</p>
-          <h1>Dev/Cld Live Workspace</h1>
+          <p className="eyebrow">Bookmark Intelligence · Personal knowledge</p>
+          <h1>Memory Desk</h1>
         </div>
         <div className="import-box">
           <label className="upload-button">
@@ -532,7 +613,11 @@ export default function App() {
         </div>
       </section>
 
-      {importMessage && <p className="status-message">{importMessage}</p>}
+      {importMessage && (
+        <p aria-live="polite" className="status-message">
+          {importMessage}
+        </p>
+      )}
 
       <section className="stats-grid">
         <StatCard id="stat-total" label="Total retained" note="canonical local records" value={stats.total} />
@@ -558,7 +643,7 @@ export default function App() {
         />
       </section>
 
-      <section className="workspace">
+      <section className={`workspace ${activeView === 'briefing' ? 'today-workspace' : ''}`}>
         <aside className="filter-panel">
           <FilterSelect
             label="Root scope"
@@ -697,13 +782,23 @@ export default function App() {
         <section className="main-panel">
           <div className="view-tabs">
             <button
+              aria-pressed={activeView === 'briefing'}
+              className={activeView === 'briefing' ? 'active' : ''}
+              onClick={() => setActiveView('briefing')}
+              type="button"
+            >
+              Today
+            </button>
+            <button
+              aria-pressed={activeView === 'explorer'}
               className={activeView === 'explorer' ? 'active' : ''}
               onClick={() => setActiveView('explorer')}
               type="button"
             >
-              Explorer
+              Library
             </button>
             <button
+              aria-pressed={activeView === 'map'}
               className={activeView === 'map' ? 'active' : ''}
               onClick={() => setActiveView('map')}
               type="button"
@@ -711,6 +806,7 @@ export default function App() {
               Mind Map
             </button>
             <button
+              aria-pressed={activeView === 'duplicates'}
               className={activeView === 'duplicates' ? 'active' : ''}
               onClick={() => setActiveView('duplicates')}
               type="button"
@@ -718,6 +814,7 @@ export default function App() {
               Duplicates
             </button>
             <button
+              aria-pressed={activeView === 'review'}
               className={activeView === 'review' ? 'active' : ''}
               onClick={() => setActiveView('review')}
               type="button"
@@ -731,14 +828,83 @@ export default function App() {
               <h2>Import a bookmark export to begin.</h2>
               <p>The workspace stores review state locally and updates live as you import newer exports.</p>
             </div>
-          ) : activeView === 'explorer' ? (
-            <BookmarkTable
-              bookmarks={filteredBookmarks}
-              onSelect={setSelectedUrl}
-              selectedUrl={selectedBookmark?.canonicalUrl}
+          ) : activeView === 'briefing' ? (
+            <Briefing
+              bookmarks={bookmarks}
+              imports={imports}
+              onInspect={(canonicalUrl) => {
+                setSelectedUrl(canonicalUrl)
+                setActiveView('explorer')
+              }}
             />
+          ) : activeView === 'explorer' ? (
+            <>
+              {(visibleBulkSelection.length > 0 || bulkUndo) && (
+                <div className="bulk-review-bar">
+                  {visibleBulkSelection.length > 0 ? (
+                    <>
+                      <strong>
+                        {visibleBulkSelection.length} selected
+                      </strong>
+                      <button
+                        onClick={() => handleBulkReview('keep')}
+                        type="button"
+                      >
+                        Mark keep
+                      </button>
+                      <button
+                        className="secondary-button"
+                        onClick={() => handleBulkReview('learning')}
+                        type="button"
+                      >
+                        Continue learning
+                      </button>
+                      <button
+                        className="secondary-button"
+                        onClick={() => handleBulkReview('archive')}
+                        type="button"
+                      >
+                        Archive
+                      </button>
+                      <button
+                        className="quiet-control"
+                        onClick={() => setBulkSelectedUrls([])}
+                        type="button"
+                      >
+                        Clear selection
+                      </button>
+                    </>
+                  ) : (
+                    <>
+                      <span>
+                        {bulkUndo.count} bookmarks updated to {bulkUndo.action}.
+                      </span>
+                      <button onClick={handleBulkUndo} type="button">
+                        Undo
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+              <BookmarkTable
+                bookmarks={filteredBookmarks}
+                onSelect={setSelectedUrl}
+                onToggleAll={toggleAllFiltered}
+                onToggleSelection={toggleBulkSelection}
+                selectedUrl={selectedBookmark?.canonicalUrl}
+                selectedUrls={selectedUrlSet}
+              />
+            </>
           ) : activeView === 'map' ? (
-            <BookmarkMap bookmarks={filteredBookmarks} onSelect={setSelectedUrl} />
+            <Suspense
+              fallback={
+                <div className="empty-state main-empty">
+                  <h2>Opening the map…</h2>
+                </div>
+              }
+            >
+              <BookmarkMap bookmarks={filteredBookmarks} onSelect={setSelectedUrl} />
+            </Suspense>
           ) : activeView === 'duplicates' ? (
             <DuplicateReview bookmarks={filteredBookmarks} onSelect={setSelectedUrl} />
           ) : (
@@ -746,7 +912,10 @@ export default function App() {
           )}
         </section>
 
-        <BookmarkDetail bookmark={selectedBookmark} />
+        <BookmarkDetail
+          bookmark={selectedBookmark}
+          key={selectedBookmark?.canonicalUrl || 'no-selection'}
+        />
       </section>
     </main>
   )

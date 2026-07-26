@@ -15,10 +15,40 @@ function formatDate(value) {
   }).format(new Date(value))
 }
 
-export default function BookmarkTable({ bookmarks, selectedUrl, onSelect }) {
+export default function BookmarkTable({
+  bookmarks,
+  selectedUrl,
+  selectedUrls,
+  onSelect,
+  onToggleAll,
+  onToggleSelection,
+}) {
   const [sorting, setSorting] = useState([{ id: 'lastSeenAt', desc: true }])
+  const allSelected =
+    bookmarks.length > 0 &&
+    bookmarks.every((bookmark) => selectedUrls.has(bookmark.canonicalUrl))
   const columns = useMemo(
     () => [
+      {
+        id: 'select',
+        header: () => (
+          <input
+            aria-label="Select all filtered bookmarks"
+            checked={allSelected}
+            onChange={(event) => onToggleAll(event.target.checked)}
+            type="checkbox"
+          />
+        ),
+        cell: ({ row }) => (
+          <input
+            aria-label={`Select ${row.original.title}`}
+            checked={selectedUrls.has(row.original.canonicalUrl)}
+            onChange={() => onToggleSelection(row.original.canonicalUrl)}
+            type="checkbox"
+          />
+        ),
+        enableSorting: false,
+      },
       {
         accessorKey: 'title',
         header: 'Bookmark',
@@ -73,7 +103,14 @@ export default function BookmarkTable({ bookmarks, selectedUrl, onSelect }) {
         cell: ({ getValue }) => formatDate(getValue()),
       },
     ],
-    [onSelect, selectedUrl],
+    [
+      allSelected,
+      onSelect,
+      onToggleAll,
+      onToggleSelection,
+      selectedUrl,
+      selectedUrls,
+    ],
   )
 
   const table = useReactTable({
@@ -93,15 +130,31 @@ export default function BookmarkTable({ bookmarks, selectedUrl, onSelect }) {
             <tr key={headerGroup.id}>
               {headerGroup.headers.map((header) => (
                 <th key={header.id}>
-                  <button
-                    className="table-heading"
-                    onClick={header.column.getToggleSortingHandler()}
-                    type="button"
-                  >
-                    {flexRender(header.column.columnDef.header, header.getContext())}
-                    <span>{header.column.getIsSorted() === 'asc' ? ' up' : ''}</span>
-                    <span>{header.column.getIsSorted() === 'desc' ? ' down' : ''}</span>
-                  </button>
+                  {header.column.getCanSort() ? (
+                    <button
+                      className="table-heading"
+                      onClick={header.column.getToggleSortingHandler()}
+                      type="button"
+                    >
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
+                      <span>
+                        {header.column.getIsSorted() === 'asc' ? ' up' : ''}
+                      </span>
+                      <span>
+                        {header.column.getIsSorted() === 'desc' ? ' down' : ''}
+                      </span>
+                    </button>
+                  ) : (
+                    <div className="table-heading table-heading-static">
+                      {flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
+                    </div>
+                  )}
                 </th>
               ))}
             </tr>

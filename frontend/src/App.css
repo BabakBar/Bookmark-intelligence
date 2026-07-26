@@ -1,6 +1,9 @@
 .app-shell {
   min-height: 100vh;
   padding: 24px;
+  background:
+    radial-gradient(circle at 8% 0%, rgba(49, 86, 211, 0.08), transparent 28%),
+    #f4f2ec;
 }
 
 .topbar {
@@ -13,7 +16,8 @@
 }
 
 .topbar h1 {
-  font-size: 30px;
+  font-size: 32px;
+  letter-spacing: -0.035em;
   line-height: 1.15;
   margin: 0;
 }
@@ -117,9 +121,9 @@ button {
 .filter-panel,
 .main-panel,
 .detail-panel {
-  background: #fff;
-  border: 1px solid #d9e2ee;
-  border-radius: 8px;
+  background: #fffefb;
+  border: 1px solid #d8d5cc;
+  border-radius: 14px;
   min-width: 0;
 }
 
@@ -238,10 +242,14 @@ textarea {
 }
 
 .view-tabs {
-  border-bottom: 1px solid #d9e2ee;
+  background: rgba(255, 254, 251, 0.94);
+  border-bottom: 1px solid #d8d5cc;
   display: flex;
   gap: 8px;
   padding: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 9;
 }
 
 .view-tabs button {
@@ -251,14 +259,364 @@ textarea {
 }
 
 .view-tabs button.active {
-  background: #172033;
-  border-color: #172033;
+  background: #3156d3;
+  border-color: #3156d3;
   color: #fff;
+}
+
+.today-workspace {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.today-workspace > .filter-panel,
+.today-workspace > .detail-panel {
+  display: none;
+}
+
+.today-workspace .main-panel {
+  min-height: 0;
+}
+
+.briefing {
+  display: grid;
+  gap: 18px;
+  padding: 20px;
+}
+
+.briefing-hero {
+  align-items: end;
+  background:
+    linear-gradient(135deg, rgba(49, 86, 211, 0.98), rgba(23, 32, 51, 0.98)),
+    #172033;
+  border-radius: 16px;
+  color: #fff;
+  display: flex;
+  gap: 32px;
+  justify-content: space-between;
+  min-height: 190px;
+  overflow: hidden;
+  padding: 28px;
+  position: relative;
+}
+
+.briefing-hero::after {
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+  content: '';
+  height: 260px;
+  position: absolute;
+  right: -70px;
+  top: -150px;
+  width: 260px;
+}
+
+.briefing-kicker {
+  align-items: center;
+  display: flex;
+  font-size: 12px;
+  font-weight: 750;
+  gap: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.local-badge {
+  background: rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  letter-spacing: 0.02em;
+  padding: 4px 8px;
+  text-transform: none;
+}
+
+.briefing-hero h2 {
+  font-size: clamp(30px, 4vw, 52px);
+  letter-spacing: -0.055em;
+  line-height: 0.98;
+  margin: 18px 0 12px;
+  max-width: 760px;
+}
+
+.briefing-hero p {
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 15px;
+  margin: 0;
+  max-width: 640px;
+}
+
+.briefing-facts {
+  display: grid;
+  flex: 0 0 auto;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  gap: 8px;
+  opacity: 0.78;
+  text-align: right;
+  z-index: 1;
+}
+
+.daily-flight,
+.pulse-section {
+  border: 1px solid #d8d5cc;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.daily-flight {
+  background: #172033;
+  color: #fff;
+}
+
+.flight-progress,
+.section-heading {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  padding: 16px 18px;
+}
+
+.flight-progress {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.flight-progress .eyebrow {
+  color: #aebcf5;
+}
+
+.flight-progress h3,
+.section-heading h3 {
+  font-size: 18px;
+  margin: 2px 0 0;
+}
+
+.flight-progress > span {
+  color: #bdc5d7;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+}
+
+.flight-card {
+  display: grid;
+}
+
+.flight-card-main {
+  align-items: start;
+  display: grid;
+  gap: 28px;
+  grid-template-columns: minmax(180px, 0.34fr) minmax(0, 1fr);
+  padding: 26px;
+}
+
+.why-now {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  display: grid;
+  gap: 7px;
+  padding: 15px;
+}
+
+.why-now > span {
+  color: #aebcf5;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.why-now strong {
+  font-size: 13px;
+}
+
+.why-now p {
+  color: #bdc5d7;
+  font-size: 13px;
+  margin: 0;
+}
+
+.domain-label {
+  color: #9fb1ff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  margin: 0 0 8px;
+}
+
+.flight-card-main h3 {
+  font-size: clamp(24px, 3vw, 38px);
+  letter-spacing: -0.04em;
+  line-height: 1.08;
+  margin: 0;
+  max-width: 900px;
+}
+
+.flight-folders {
+  color: #bdc5d7;
+  font-size: 13px;
+  margin: 12px 0;
+}
+
+.topic-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.topic-row span {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 999px;
+  color: #dce3ff;
+  font-size: 11px;
+  padding: 4px 8px;
+}
+
+.flight-actions {
+  align-items: center;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 14px 18px;
+}
+
+.button-link {
+  align-items: center;
+  border-radius: 8px;
+  display: inline-flex;
+  font-size: 14px;
+  font-weight: 700;
+  justify-content: center;
+  min-height: 38px;
+  padding: 8px 13px;
+  text-decoration: none;
+}
+
+.primary-action {
+  background: #fff;
+  color: #172033;
+}
+
+.flight-actions button {
+  background: #3156d3;
+  border-color: #4668dc;
+}
+
+.flight-actions .secondary-button,
+.flight-actions .quiet-button {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #fff;
+}
+
+.flight-actions .quiet-button {
+  border-color: transparent;
+}
+
+.flight-actions .danger-text {
+  color: #ffb4ab;
+  margin-left: auto;
+}
+
+.flight-complete,
+.flight-empty {
+  align-items: center;
+  display: flex;
+  gap: 18px;
+  min-height: 190px;
+  padding: 26px;
+}
+
+.flight-complete > span {
+  background: #287a59;
+  border-radius: 50%;
+  display: grid;
+  font-size: 24px;
+  height: 48px;
+  place-items: center;
+  width: 48px;
+}
+
+.flight-complete h3,
+.flight-empty h3 {
+  font-size: 28px;
+  margin: 0 0 4px;
+}
+
+.flight-complete p {
+  color: #bdc5d7;
+  margin: 0;
+}
+
+.inline-error {
+  background: rgba(180, 35, 24, 0.18);
+  color: #ffb4ab;
+  margin: 0;
+  padding: 10px 18px;
+}
+
+.pulse-section {
+  background: #fffefb;
+}
+
+.pulse-grid {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  background: #d8d5cc;
+  border-top: 1px solid #d8d5cc;
+}
+
+.pulse-card {
+  background: #fffefb;
+  display: grid;
+  min-height: 140px;
+  padding: 18px;
+}
+
+.pulse-card strong {
+  color: #172033;
+  font-size: 32px;
+  letter-spacing: -0.04em;
+}
+
+.pulse-card span {
+  color: #344256;
+  font-size: 13px;
+  font-weight: 750;
+}
+
+.pulse-card small {
+  align-self: end;
+  color: #667085;
+  font-size: 11px;
 }
 
 .table-wrap {
   height: 626px;
   overflow: auto;
+}
+
+.bulk-review-bar {
+  align-items: center;
+  background: #f0f3ff;
+  border-bottom: 1px solid #c7d2fe;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 56px;
+  padding: 9px 12px;
+}
+
+.bulk-review-bar strong,
+.bulk-review-bar span {
+  color: #253568;
+  font-size: 13px;
+  margin-right: auto;
+}
+
+.bulk-review-bar .quiet-control {
+  background: transparent;
+  border-color: transparent;
+  color: #475569;
 }
 
 table {
@@ -296,6 +654,18 @@ th {
   min-height: 42px;
   padding: 10px 12px;
   width: 100%;
+}
+
+.table-heading-static {
+  cursor: default;
+}
+
+th input,
+td input {
+  accent-color: #3156d3;
+  height: 16px;
+  margin: 2px;
+  width: 16px;
 }
 
 .link-button {
@@ -596,5 +966,51 @@ th {
 
   .main-panel {
     min-height: 560px;
+  }
+
+  .view-tabs {
+    gap: 6px;
+    overflow-x: auto;
+  }
+
+  .view-tabs button {
+    flex: 0 0 auto;
+    min-height: 44px;
+  }
+
+  .briefing {
+    padding: 12px;
+  }
+
+  .briefing-hero {
+    align-items: start;
+    display: grid;
+    min-height: 240px;
+    padding: 22px;
+  }
+
+  .briefing-facts {
+    text-align: left;
+  }
+
+  .flight-card-main {
+    grid-template-columns: 1fr;
+    padding: 18px;
+  }
+
+  .flight-actions {
+    align-items: stretch;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    position: sticky;
+    bottom: 0;
+  }
+
+  .flight-actions .danger-text {
+    margin-left: 0;
+  }
+
+  .pulse-grid {
+    grid-template-columns: 1fr 1fr;
   }
 }

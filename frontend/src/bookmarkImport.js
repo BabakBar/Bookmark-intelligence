@@ -1,15 +1,10 @@
 import { db } from './db'
 import { deriveBookmarkMetadata } from './bookmarkSignals'
+import { canonicalizeUrl, isSupportedBookmarkUrl } from './bookmarkUrl'
 
-const TRACKING_PARAMS = new Set([
-  'fbclid',
-  'gclid',
-  'igshid',
-  'mc_cid',
-  'mc_eid',
-  'ref',
-  'spm',
-])
+export { canonicalizeUrl } from './bookmarkUrl'
+
+const MAX_IMPORT_BYTES = 25 * 1024 * 1024
 
 function isElement(node, tagName) {
   return node?.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === tagName
@@ -34,33 +29,9 @@ function normalizeDomain(hostname) {
   return lower.startsWith('www.') ? lower.slice(4) : lower
 }
 
-export function canonicalizeUrl(rawUrl) {
-  try {
-    const url = new URL(rawUrl)
-    url.hash = ''
-    url.hostname = normalizeDomain(url.hostname)
-
-    for (const key of [...url.searchParams.keys()]) {
-      if (key.startsWith('utm_') || TRACKING_PARAMS.has(key)) {
-        url.searchParams.delete(key)
-      }
-    }
-
-    url.searchParams.sort()
-
-    if (url.pathname.length > 1 && url.pathname.endsWith('/')) {
-      url.pathname = url.pathname.slice(0, -1)
-    }
-
-    return url.toString()
-  } catch {
-    return rawUrl.trim()
-  }
-}
-
 function bookmarkFromAnchor(anchor, folderPath) {
   const url = anchor.getAttribute('href')?.trim()
-  if (!url || url.startsWith('file://')) return null
+  if (!url || !isSupportedBookmarkUrl(url)) return null
 
   let parsedUrl
   try {
@@ -160,6 +131,10 @@ function mergeFolderPaths(existingPaths = [], incomingPaths = []) {
 }
 
 export async function importBookmarkFile(file) {
+  if (file.size > MAX_IMPORT_BYTES) {
+    throw new Error('Bookmark export is larger than the 25 MB safety limit.')
+  }
+
   const html = await file.text()
   const parsedBookmarks = parseBookmarkHtml(html)
   const importedAt = new Date().toISOString()
@@ -180,15 +155,23 @@ export async function importBookmarkFile(file) {
   }
 
   const bookmarks = [...uniqueByUrl.values()]
-  const importId = await db.imports.add({
-    fileName: file.name,
-    importedAt,
-    totalCount: bookmarks.length,
-    devCount: bookmarks.filter((bookmark) => bookmark.rootFolders.includes('Dev')).length,
-    cldCount: bookmarks.filter((bookmark) => bookmark.rootFolders.includes('Cld')).length,
-  })
+  if (bookmarks.length === 0) {
+    throw new Error('Bookmark export contains no supported HTTP or HTTPS bookmarks.')
+  }
 
-  await db.transaction('rw', db.bookmarks, async () => {
+  const devCount = bookmarks.filter((bookmark) => bookmark.rootFolders.includes('Dev')).length
+  const cldCount = bookmarks.filter((bookmark) => bookmark.rootFolders.includes('Cld')).length
+  let importId
+
+  await db.transaction('rw', db.bookmarks, db.imports, async () => {
+    importId = await db.imports.add({
+      fileName: file.name,
+      importedAt,
+      totalCount: bookmarks.length,
+      devCount,
+      cldCount,
+    })
+
     for (const bookmark of bookmarks) {
       const existing = await db.bookmarks.get(bookmark.canonicalUrl)
 
@@ -242,7 +225,7 @@ export async function importBookmarkFile(file) {
     importedAt,
     parsedCount: parsedBookmarks.length,
     uniqueCount: bookmarks.length,
-    devCount: bookmarks.filter((bookmark) => bookmark.rootFolders.includes('Dev')).length,
-    cldCount: bookmarks.filter((bookmark) => bookmark.rootFolders.includes('Cld')).length,
+    devCount,
+    cldCount,
   }
 }

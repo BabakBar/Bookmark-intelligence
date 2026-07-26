@@ -11,6 +11,8 @@ const PROVIDER_RULES = [
   ['OpenAI', ['openai.com', 'platform.openai.com']],
 ]
 
+export const BOOKMARK_SIGNAL_VERSION = 2
+
 const TOPIC_RULES = [
   ['ai-agents', ['agent', 'agents', 'claude', 'openai', 'llm', 'mcp', 'rag']],
   ['aws', ['aws', 'saa', 'ccp', 'dea', 'cloud practitioner', 'skillbuilder']],
@@ -19,7 +21,7 @@ const TOPIC_RULES = [
   ['containers', ['docker', 'container', 'containers', 'compose']],
   ['kubernetes', ['kubernetes', 'k8s', 'kubectl', 'helm']],
   ['terraform', ['terraform', 'iac', 'infrastructure as code', 'pulumi']],
-  ['networking', ['network', 'dns', 'tcp', 'http', 'load balancer']],
+  ['networking', ['network', 'networking', 'dns', 'tcp', 'load balancer']],
   ['observability', ['observability', 'monitoring', 'metrics', 'logging', 'prometheus']],
   ['linux', ['linux', 'shell', 'bash', 'terminal', 'systemd']],
   ['python', ['python', 'pydantic', 'fastapi', 'pytest']],
@@ -51,8 +53,17 @@ function normalizedText(bookmark) {
     .toLowerCase()
 }
 
+function escapePattern(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function matchesSignal(text, value) {
+  const pattern = new RegExp(`(^|[^a-z0-9])${escapePattern(value)}(?=$|[^a-z0-9])`)
+  return pattern.test(text)
+}
+
 function matchesAny(text, values) {
-  return values.some((value) => text.includes(value))
+  return values.some((value) => matchesSignal(text, value))
 }
 
 function providerFor(bookmark) {
@@ -118,5 +129,6 @@ export function deriveBookmarkMetadata(bookmark) {
     contentType,
     reviewPriority: reviewPriorityFor(bookmark, topics, contentType),
     inferredAt: new Date().toISOString(),
+    signalVersion: BOOKMARK_SIGNAL_VERSION,
   }
 }
