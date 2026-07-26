@@ -1,5 +1,11 @@
 # System Architecture
 
+> **Document status - mixed.** The local-first IndexedDB flow is implemented.
+> The extension, FastAPI/PostgreSQL/Qdrant/Valkey, AI, Celery, and Coolify
+> sections are target or historical architecture and have not been validated
+> as a complete system. See [`../PROGRESS.md`](../PROGRESS.md) for current
+> truth.
+
 **Navigation**: [Overview](overview.md) | [Features](features.md) | [Roadmap](roadmap.md) | [Reference](reference.md)
 
 ---
@@ -14,7 +20,7 @@
 
 ---
 
-## High-Level Architecture
+## Target High-Level Architecture (Future)
 
 ```
 ┌─────────────────────────────────────┐
@@ -58,9 +64,10 @@
 
 ## Data Flows
 
-### Current Phase 0: Dev/Cld Local-First Workspace
+### Current Phase 0C: Local Memory Desk
 
-The current implemented frontend path is local-first and focused on making the large `Dev` and `Cld` folders maintainable before backend sync or AI enrichment.
+The implemented path is local-first and covers the full retained collection.
+Dev and Cld remain optional scopes rather than the product boundary.
 
 1. User imports a browser bookmark HTML export in the frontend.
 2. The browser parses the Netscape bookmark HTML format with `DOMParser`.
@@ -68,20 +75,26 @@ The current implemented frontend path is local-first and focused on making the l
 4. Provider, topic, content type, and review priority are inferred locally from title, URL, domain, and folder path.
 5. Retained bookmark records are upserted into IndexedDB via Dexie using `canonicalUrl` as the primary key.
 6. Review state, status, user tags, notes, keep reason, first seen timestamp, merged folder context, and inferred metadata persist across later imports.
-7. The Dev/Cld workspace renders live from IndexedDB:
+7. The Memory Desk renders live from IndexedDB:
+   - deterministic daily deck of at most six explainable records
+   - persisted daily session progress and local activity events
    - faceted explorer table via TanStack Table
+   - transactional multi-select review with one-step undo
    - filtered mind map via React Flow
    - duplicate/canonical review for multi-folder records and URL variants
    - review queue ordered by merge risk, time sensitivity, and durable reference value
    - saved views for recurring filter workflows
    - bookmark detail panel with retention controls
-   - JSON backup export/restore for local review state, user tags, saved views, and import history
+   - version 3 JSON backup/restore for retained records, imports, views,
+     daily sessions, activity events, and metadata
 
-This path currently produces 912 retained canonical records from the 936 raw bookmark instances in `bookmarks_06_07_2026.html`. `Dev + Cld` contains 540 retained canonical records after normalization.
+The July 2026 export snapshot produces 912 retained canonical records from 936
+raw instances. `Dev + Cld` contains 540 retained canonical records after
+normalization.
 
-Implementation note: [Dev/Cld Local-First Workspace](dev/implementation/2026-07-06-devcld-local-workspace.md)
+Implementation note: [Memory Desk Daily Flight](dev/implementation/2026-07-26-memory-desk-daily-flight.md)
 
-### Phase 0: Bootstrap Import Flow (One-Time)
+### Historical Backend Bootstrap Proposal
 
 **Initial Setup for Existing Bookmarks**
 

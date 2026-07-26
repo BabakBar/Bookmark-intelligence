@@ -1,5 +1,10 @@
 # Research: Bookmark Growth, Navigation, and Retention
 
+> **Pre-implementation evidence snapshot.** The export analysis remains useful,
+> but the opening implementation assessment was superseded by the local-first
+> workspace built afterward. See
+> [`../../../PROGRESS.md`](../../../PROGRESS.md) for current status.
+
 **Date:** 2026-07-06  
 **Source exports inspected:** `data/raw/bookmarks_29_10_2025.html`, `data/raw/bookmarks_17_12_2025.html`, `data/raw/bookmarks_04_01_2026.html`, `bookmarks_06_07_2026.html`  
 **Status:** Investigation complete

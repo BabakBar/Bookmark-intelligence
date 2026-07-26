@@ -1,5 +1,11 @@
 # Week 2: AI Processing Implementation Plan
 
+> **Historical experimental plan; do not execute as a current runbook.** The
+> dependencies and stage contracts are not reproducible from the locked
+> project, and the current roadmap requires a consented small-sample evaluation
+> before any paid collection-wide run. See
+> [`../../../PROGRESS.md`](../../../PROGRESS.md).
+
 > **Note:** This plan will be moved to `docs/dev/plans/2025-12-17-week2-ai-processing.md` during implementation
 
 **Date:** 2025-12-17

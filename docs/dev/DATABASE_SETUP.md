@@ -1,5 +1,11 @@
 # Database Setup Guide
 
+> **Experimental and non-runnable as written.** The active product does not
+> require PostgreSQL. There are currently no Alembic revision files, the
+> backend import contract is broken, and no database integration test proves
+> this guide. Do not use it for production or run it with private data. See
+> [`../../PROGRESS.md`](../../PROGRESS.md).
+
 Modern async database stack with SQLAlchemy 2.0, asyncpg, and Alembic.
 
 ## Tech Stack (2024-2025)

@@ -1,5 +1,10 @@
 # Quickstart: Phase 0 Bootstrap Import
 
+> **Historical design; do not execute.** This document references directories,
+> migrations, authentication, Celery tasks, endpoints, and UI behavior that do
+> not exist as a verified system. The supported runbook is
+> [`../../docs/run.md`](../../docs/run.md).
+
 **Feature**: Phase 0 Bootstrap - Import & Organize Existing Bookmarks
 **Target**: Local development environment
 **Time**: ~30 minutes setup

@@ -1,5 +1,9 @@
 # Implementation: Dev/Cld Local-First Workspace
 
+> **Implementation snapshot.** This records the state shipped on 2026-07-06.
+> Current risks, priorities, and verification live in
+> [`../../../PROGRESS.md`](../../../PROGRESS.md).
+
 **Date:** 2026-07-06  
 **Status:** Implemented and browser-smoke-tested  
 **Scope:** Frontend live workspace for the large `Dev` and `Cld` bookmark folders
@@ -318,7 +322,7 @@ Build note:
 
 Vite reports one chunk above 500 kB after adding the table and graph stack. This is acceptable for the current local tool. If production performance becomes a priority, split the map view with a dynamic import.
 
-## Next Steps
+## Next Steps at Time of Implementation
 
 1. Add a small saved-view dashboard with counts and stale-view warnings.
 2. Add optional bulk actions for the current filtered set.

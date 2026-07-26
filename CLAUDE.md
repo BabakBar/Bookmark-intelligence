@@ -1,24 +1,26 @@
-# BookmarkAI Project
+# Bookmark Intelligence Project
 
-AI-powered bookmark manager with context-aware search and automatic organization.
+Trusted personal bookmark memory with reviewable organization and later
+context-aware resurfacing.
 
-## Tech Stack
+Read `PROGRESS.md` before acting. It is the canonical current status.
 
-- **Backend**: Python 3.13 + FastAPI (async/await, Pydantic v2)
-- **Databases**: PostgreSQL 17 + Qdrant (vector) + Valkey (Redis fork)
-- **AI**: OpenAI embeddings + Claude (Haiku for tagging/summarization)
-- **Deployment**: Self-hosted on Hetzner VPS via Coolify
+## Current Phase: Phase 0C - Daily Memory Workflow Validation
 
-## Current Phase: Phase 0 - Bootstrap & Import (weeks 1-2)
+The supported product is the browser-local Memory Desk under `frontend/`:
 
-Import and organize 800 existing bookmarks BEFORE building browser extension:
+- browser HTML import;
+- canonical retained records in IndexedDB;
+- finite daily flight over All Memory;
+- Library, bounded bulk review, mind map, duplicate review, and review queue;
+- notes, tags, status, sessions, activity, saved views, and backup/restore.
 
-- Import bookmarks from HTML
-- Batch AI processing (embeddings, tags, summaries)
-- Clustering and project suggestions
-- Web dashboard validation
+FastAPI, PostgreSQL, Qdrant, Valkey, paid AI processing, hosted sync, and the
+browser extension are experimental or future work. Do not deploy or run
+cost-bearing jobs without a new reviewed plan.
 
-**Why Phase 0 matters:** Proves AI organization of Bookmarks works correctly before committing to extension development.
+Raw bookmark exports and workspace backups are private local data. Never put
+them in Git, chat, Obsidian, OpenClaw sessions, or coding worktrees.
 
 ## Development Workflow
 
@@ -62,32 +64,31 @@ Execute plan phase by phase with verification.
 1. Read plan completely
 2. Implement one phase at a time
 3. Run automated verification (pytest, mypy, ruff)
-4. **PAUSE** for manual verification
-5. Update checkboxes in plan file
-6. Get approval before next phase
+4. Record manual verification when interaction quality needs it
+5. Update checkboxes in the plan file
+6. Continue safe local phases without an approval pause; stop for destructive,
+   external, paid, privacy-expanding, or deployment decisions
 
 ## Testing Commands
 
 ```bash
-# Run all checks
-pytest tests/
-mypy .
-ruff check
-
-# Or if Makefile exists
-make test
-make check
+# Current supported checks
+uv run --extra dev pytest -q
+cd frontend && bun run lint
+cd frontend && bun run build
+cd frontend && bun run test:unit
+cd frontend && bun run test:e2e
 ```
 
 ## Key Patterns
 
-**AI Integration:**
+**Future AI Integration:**
 
 - OpenAI text-embedding-3-small for embeddings
 - Claude Haiku for cost-effective tagging/summarization
 - Use Batch API for 50% cost savings on large operations
 
-**Database:**
+**Experimental Backend:**
 
 - SQLAlchemy 2.0+ async patterns
 - Alembic for migrations

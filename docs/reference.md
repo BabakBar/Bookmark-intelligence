@@ -1,5 +1,9 @@
 # Reference Documentation
 
+> **Document status - future vision and historical planning.** Costs, security
+> targets, model choices, and scale assumptions below are not current runtime
+> evidence. See [`../PROGRESS.md`](../PROGRESS.md).
+
 **Navigation**: [Overview](overview.md) | [Architecture](architecture.md) | [Features](features.md) | [Roadmap](roadmap.md)
 
 ---

@@ -1,5 +1,10 @@
 # Feature Specifications
 
+> **Document status - future vision and historical planning.** This document
+> does not describe current implementation or delivery status. See
+> [`../PROGRESS.md`](../PROGRESS.md). The active product is the Phase 0C
+> local-first workspace.
+
 **Navigation**: [Overview](overview.md) | [Architecture](architecture.md) | [Roadmap](roadmap.md) | [Reference](reference.md)
 
 ---

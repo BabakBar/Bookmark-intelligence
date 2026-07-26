@@ -1,189 +1,109 @@
-# Quick Start Guide
+# Run and Verify Bookmark Intelligence
 
-## 1. Start Infrastructure
-```bash
-docker compose up -d
-```
+The supported product is the local-first frontend. The backend and AI pipeline
+are experimental and are not required for normal use.
 
-## 2. Setup Backend
-```bash
-# Create and activate virtual environment
-uv venv
-source .venv/bin/activate  # macOS/Linux
-# .venv\Scripts\activate   # Windows
+## Requirements
 
-# Install dependencies and run migrations
-uv pip install -e ".[dev]"
-alembic upgrade head
+- Bun
+- A Chromium browser for Playwright verification
+- Python 3.13 and uv for parser/extractor tests
 
-# Start server
-uvicorn src.app.main:app --reload
-```
+## Start the Workspace
 
-## 3. Setup Frontend
 ```bash
 cd frontend
 bun install
 bun run dev
 ```
 
-## 4. Use the Dev/Cld Live Workspace
-1. Open `http://localhost:5173`
-2. Import a browser bookmark HTML export, for example `bookmarks_06_07_2026.html`
-3. Use the `Dev + Cld`, `Dev`, and `Cld` scopes to review the large folders
-4. Use folder/domain/topic/provider/content/review/status filters to narrow the table
-5. Switch to `Mind Map` for a filtered graph of roots, folders, domains, and focused bookmarks
-6. Switch to `Duplicates` to review canonical URL merges, URL variants, and multi-folder records
-7. Switch to `Review Queue` for prioritized cleanup by merge risk, certification/interview urgency, and durable references
-8. Select a bookmark to set review state, status, user tags, keep reason, and notes
-9. Save recurring filter sets as views, for example `AWS cert cleanup`
-10. Use `Export backup` to download local review state, tags, saved views, and imports as JSON before clearing data or changing browsers
-11. Use `Restore backup` to merge a previous workspace backup back into IndexedDB
+Open `http://localhost:5173`.
 
-The current frontend stores retained records locally in IndexedDB. Re-importing newer exports updates records by canonical URL and preserves review state, notes, and keep reasons.
+## Use the Workspace
 
-The frontend also infers local metadata without AI calls: topics, provider, content type, and review priority. These are heuristics for fast triage and can be replaced or supplemented by AI later.
+1. Import a browser bookmark HTML export.
+2. Start on **Today** and complete or defer the finite daily flight.
+3. Use **Library** for all-memory search, optional Dev/Cld scopes, and bulk review.
+4. Use Mind Map, Duplicates, and Review Queue for deeper exploration.
+5. Select a bookmark to edit tags, state, status, keep reason, or notes.
+6. Save recurring filters as views.
+7. Export a JSON backup before clearing browser data or changing profiles.
 
-For the July 2026 export, the importer keeps 912 canonical records from 936 raw bookmark instances. `Dev + Cld` becomes 540 retained records after URL normalization.
+The browser stores retained records in IndexedDB. Re-importing a newer browser
+export updates records by canonical URL while preserving manually entered
+retention state.
 
-**Done!** The local-first Dev/Cld workspace is running.
+## Private Data
 
----
+Raw exports, workspace backups, IndexedDB dumps, and generated AI outputs are
+private user data.
 
-## AI + Bookmark Processing Pipelines (CLI)
+- Keep raw exports under ignored `data/` storage.
+- Do not commit them to Git.
+- Do not place them in Telegram, Obsidian, OpenClaw sessions, or coder
+  worktrees.
+- The committed E2E fixture is synthetic and contains no private bookmark data.
 
-These pipelines write files under `data/processed/`, `data/ai/`, and `data/reports/`.
+## Verification
 
-### 1) Offline Bookmark Processing (Dry Run)
-Runs entirely locally (no OpenAI required) using the sample fixture:
+From the repository root:
 
-```bash
-uv run scripts/process_bookmarks.py --input tests/fixtures/sample_bookmarks.html
-```
-
-Expected outputs:
-- `data/processed/bookmarks_flat.json`
-- `data/processed/bookmarks_clean.json`
-- `data/processed/bookmarks_clean.md`
-
-### 2) AI Tagging Only (Cheap Dry Run)
-Useful to validate prompts + 12-field outputs without waiting for embeddings/clustering.
-
-1) Ensure you have `OPENAI_API_KEY` set (copy `.env.example` → `.env` if you use dotenv tooling).
-2) Create a small input file (first 20 bookmarks):
-
-```bash
-python - <<'PY'
-import json
-from pathlib import Path
-
-src = Path("data/processed/bookmarks_flat.json")
-dst = Path("data/processed/bookmarks_flat_small.json")
-
-bookmarks = json.loads(src.read_text())
-dst.write_text(json.dumps(bookmarks[:20], indent=2))
-print(f"Wrote {dst} ({min(20, len(bookmarks))} bookmarks)")
-PY
-```
-
-3) Run tagging stage only:
-
-```bash
-uv run scripts/process_ai.py --input data/processed/bookmarks_flat_small.json --stage tag
-```
-
-Expected output:
-- `data/ai/bookmarks_tagged.json` (intermediate list of enriched bookmarks)
-
-Optional: verify all 12 AI fields exist (and are non-empty where required):
-
-```bash
-python - <<'PY'
-import json
-from pathlib import Path
-
-required = {
-  "tags", "summary", "content_type", "primary_technology", "skill_level",
-  "use_cases", "key_topics", "value_proposition", "folder_recommendation",
-  "priority", "related_keywords", "actionability",
-}
-
-bookmarks = json.loads(Path("data/ai/bookmarks_tagged.json").read_text())
-bad = []
-for i, b in enumerate(bookmarks):
-    missing = sorted(required - set(b.keys()))
-    if missing:
-        bad.append((i, missing))
-
-print(f"bookmarks: {len(bookmarks)}")
-print(f"missing-required: {len(bad)}")
-if bad:
-    print("first-bad:", bad[0])
-PY
-```
-
-### 3) Full AI Pipeline (Embeddings + Tagging + Clustering)
-This uses the OpenAI Batch API for embeddings and can take time (batch completion window is up to 24 hours).
-
-```bash
-uv run scripts/process_ai.py --stage all
-```
-
-If you need to resume a finished/ongoing embedding batch:
-
-```bash
-uv run scripts/process_ai.py --stage embed --batch-id "$(cat data/ai/batch_id.txt)"
-```
-
-Expected outputs:
-- `data/ai/embeddings.npy`
-- `data/ai/clusters.json`
-- `data/ai/projects_suggested.json`
-- `data/ai/folder_recommendations.json`
-- `data/ai/bookmarks_ai.json`
-- `data/reports/YYYY-MM-DD-ai-processing.md`
-
-## Quick Commands Reference
-
-### Start Everything
-```bash
-docker compose up -d && \
-source .venv/bin/activate && \
-uvicorn src.app.main:app --reload & \
-cd frontend && bun run dev
-```
-
-### Stop Everything
-```bash
-docker compose down
-pkill -f uvicorn
-pkill -f vite
-```
-
-### Reset Database
-```bash
-alembic downgrade base && alembic upgrade head
-```
-
-### Run Tests
 ```bash
 uv run --extra dev pytest -q
-cd frontend && bun run lint && bun run build
-cd frontend && bunx playwright test e2e/devcld-workspace.spec.js
 ```
 
----
+From `frontend/`:
 
-## URLs
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
+```bash
+bun run lint
+bun run build
+bun run test:unit
+bun run test:e2e
+```
 
----
+`bun run test:e2e` starts and stops its own Vite server. It uses
+`e2e/fixtures/devcld-bookmarks.html`, so it works without Sia's private export.
+If Playwright Chromium is not installed, run `bunx playwright install chromium`
+once.
 
-## Next Steps
-- Import your browser bookmarks
-- Check database: `docker compose exec postgres psql -U user bookmarkai -c "SELECT COUNT(*) FROM bookmarks;"`
-- Explore API documentation at `/docs`
+## Local Trust Drill
 
-For detailed setup or troubleshooting, see the original documentation.
+```bash
+cd frontend
+bun run dev
+```
+
+Then import the synthetic fixture and check Today, Library selection,
+multi-select plus undo, refresh persistence, and backup export/restore. The
+automated browser suite covers these flows; the local drill is for interaction
+quality rather than a phase approval gate.
+
+For the responsive check, inspect Today at both a normal desktop width and a
+390 x 844 browser viewport. Confirm the tab strip remains scrollable, the
+Daily Flight actions use two usable columns, Collection Pulse remains legible,
+and the page itself has no horizontal overflow.
+
+## Experimental Backend and AI
+
+The following surfaces are preserved for research but are not supported run
+paths:
+
+- `src/app/`
+- `alembic/`
+- `docker-compose.yml`
+- `src/bookmark_intelligence/ai/`
+- `scripts/process_ai.py`
+
+Do not treat `docker compose up`, `alembic upgrade head`, FastAPI health output,
+or the AI CLI as proof of a working system. Current blockers include missing
+migrations, a broken parser/API contract, undeclared AI dependencies, no
+authentication or ownership boundary, and no database/AI integration tests.
+
+Do not run a paid collection-wide AI job. The current roadmap requires a
+consented, measured sample of approximately 20 reviewed bookmarks first.
+
+See:
+
+- [`../PROGRESS.md`](../PROGRESS.md)
+- [`roadmap.md`](roadmap.md)
+- [`dev/plans/2026-07-26-local-first-stabilization-openclaw-readiness.md`](dev/plans/2026-07-26-local-first-stabilization-openclaw-readiness.md)

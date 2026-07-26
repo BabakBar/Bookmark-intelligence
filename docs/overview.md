@@ -1,5 +1,10 @@
 # BookmarkAI - Product Overview
 
+> **Document status - future vision and historical planning.** This document
+> does not describe current implementation or delivery status. See
+> [`../PROGRESS.md`](../PROGRESS.md). The active product is the Phase 0C
+> local-first workspace.
+
 **Version:** 1.0
 **Last Updated:** October 27, 2025
 **Project Codename:** BookmarkAI
