@@ -16,16 +16,12 @@ Execute an approved plan from `docs/dev/plans/` with verification at each phase.
 
 ### 1. Read Plan Completely
 
-- Read the FULL plan (no limit/offset)
+- Read the plan
 - Check for existing checkmarks `[x]`
 - Read any referenced files
 - Understand the complete picture
 
-### 2. Create Todo List
-
-Track your progress through phases with TodoWrite.
-
-### 3. Implement Phase by Phase
+### 2. Implement Phase by Phase
 
 For each phase:
 
@@ -37,8 +33,6 @@ For each phase:
 **b) Run automated verification**
    ```bash
    # Usually covered by:
-   make test
-   make check
    pytest
    mypy
    ruff check
@@ -48,7 +42,6 @@ For each phase:
 
 **d) Update progress**
    - Check off completed items in the plan file using Edit
-   - Update your todo list
    - Mark automated criteria as done
 
 **e) Pause for manual verification**
@@ -69,7 +62,7 @@ For each phase:
 
 **f) Wait for user confirmation before next phase**
 
-### 4. Handle Mismatches
+### 3. Handle Mismatches
 
 If plan doesn't match reality:
 
@@ -82,7 +75,7 @@ Why this matters: [explanation]
 How should I proceed?
 ```
 
-### 5. Complete
+### 4. Complete
 
 When all phases done:
 - Verify all checkboxes marked
@@ -98,7 +91,7 @@ If plan has checkmarks:
 
 ## Key Points
 
-- **Read fully first** - understand the complete plan
+- **Read the plan first** - understand the complete picture
 - **One phase at a time** - complete before moving on
 - **Verify thoroughly** - run all checks
 - **Update progress** - check off items as you go

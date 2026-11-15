@@ -73,7 +73,7 @@ docs/
 
 ## Key Principles
 
-- **Read fully** - Always read files completely for context
+- **Read first** - Read the relevant files for context
 - **Research first** - Understand before planning
 - **Plan thoroughly** - No open questions before implementing
 - **Verify progressively** - Check each phase before next

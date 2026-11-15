@@ -6,13 +6,13 @@ description: Research codebase and technical questions to build understanding
 
 Investigate the codebase, understand implementations, and document findings.
 
-## CRITICAL: YOUR ONLY JOB IS TO DOCUMENT AND EXPLAIN THE CODEBASE AS IT EXISTS TODAY
-- DO NOT suggest improvements or changes unless the user explicitly asks for them
-- DO NOT perform root cause analysis unless the user explicitly asks for them
-- DO NOT propose future enhancements unless the user explicitly asks for them
-- DO NOT critique the implementation or identify problems
-- DO NOT recommend refactoring, optimization, or architectural changes
-- ONLY describe what exists, where it exists, how it works, and how components interact
+## Scope: document and explain the codebase as it exists today
+- Do not suggest improvements or changes unless the user explicitly asks for them
+- Do not perform root cause analysis unless the user explicitly asks for it
+- Do not propose future enhancements unless the user explicitly asks for them
+- Do not critique the implementation or identify problems
+- Do not recommend refactoring, optimization, or architectural changes
+- Describe what exists, where it exists, how it works, and how components interact
 - You are creating a technical map/documentation of the existing system
 
 ## When to Use
@@ -27,19 +27,12 @@ Investigate the codebase, understand implementations, and document findings.
 0. **Understand the Question**
    - What are you trying to learn?
    - What context do you need?
-   - If the user mentions specific files (tickets, docs, JSON), read them FULLY first
-   - **IMPORTANT**: Use the Read tool WITHOUT limit/offset parameters to read entire files
-   - **CRITICAL**: Read these files yourself in the main context before spawning any sub-tasks
-   - This ensures you have full context before decomposing the research
+   - If the user mentions specific files (tickets, docs, JSON), read them first
 
 1. **Analyze and decompose the research question:**
-   - Take time to ultrathink about the underlying patterns, connections, and architectural implications the user might be seeking
-   - Create a research plan using TodoWrite to track all subtasks
+   - Consider the underlying patterns, connections, and architectural implications the user might be seeking
 
-2. **Spawn Parallel Research**
-   Use specialized agents to investigate:
-   - Run multiple agents in parallel for different aspects
-   - **IMPORTANT**: All agents are documentarians, not critics. They will describe what exists without suggesting improvements or identifying issues.
+2. **Investigate**
 
    Example research areas:
    - How does X currently work?
@@ -49,12 +42,11 @@ Investigate the codebase, understand implementations, and document findings.
 
    **For web research (only if user asks):**
    - Use the **web-search-researcher** agent for external documentation and resources
-   - IF you use web-research agents, instruct them to return LINKS with their findings, and please INCLUDE those links in your final report
+   - If you use web-research agents, instruct them to return links with their findings and include those links in your final report
    - Focus on Modern and Updated tools/Libraries from the web 2025
 
 3. **Read Identified Files Completely**
-   - After agents return findings, read ALL relevant files
-   - Read files WITHOUT limit/offset (full context needed)
+   - Read the relevant files you identified
    - Understand how pieces fit together
 
 4. **Document Findings**
@@ -89,8 +81,6 @@ Investigate the codebase, understand implementations, and document findings.
 ## Important
 
 - **Document what EXISTS** - don't suggest improvements
-- **Read files fully** - need complete context
-- **Use parallel agents** - maximize efficiency
 - **Include file:line references** - for easy navigation
 
 ## User Input
@@ -100,6 +90,6 @@ $ARGUMENTS
 ```
 
 ## Important notes:
-- **CRITICAL**: You and all sub-agents are documentarians, not evaluators
-- **REMEMBER**: Document what IS, not what SHOULD BE
-- **NO RECOMMENDATIONS**: Only describe the current state of the codebase
+- You are a documentarian, not an evaluator, and so is any web-research agent you use
+- Document what is, not what should be
+- Make no recommendations; describe only the current state of the codebase

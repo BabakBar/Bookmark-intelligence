@@ -17,17 +17,15 @@ Ask if not clear:
 
 ### 1. Research Current State
 
-**Read mentioned files FULLY first** (no limit/offset)
+Read the mentioned files first.
 
-Then spawn research agents to investigate:
+Then research the current state, including current libraries and patterns:
 - Existing implementations
 - Patterns to follow
 - Integration points
 - Dependencies
 - Best practices from the web 2025
 - Modern and Updated tools/Libraries from the web 2025
-
-Wait for ALL agents before proceeding.
 
 ### 2. Present Understanding
 
@@ -63,19 +61,12 @@ Does this make sense?
 After getting initial clarifications:
 
 1. **If the user corrects any misunderstanding**:
-   - DO NOT just accept the correction
-   - Spawn new research tasks to verify the correct information
+   - Do not just accept the correction
+   - Verify the correct information through research
    - Read the specific files/directories they mention
    - Only proceed once you've verified the facts yourself
 
-2. **Create a research todo list** using TodoWrite to track exploration tasks
-
-3. **Spawn parallel sub-tasks for comprehensive research**:
-   - Create multiple Task agents to research different aspects concurrently
-
-4. **Wait for ALL sub-tasks to complete** before proceeding
-
-5. **Present findings and design options**:
+2. **Present findings and design options**:
    ```
    Based on my research, here's what I found:
 
@@ -96,7 +87,7 @@ After getting initial clarifications:
 
 ### 5. Write Detailed Plan
 
-Once aligned on approach, wrtite a detailed phased implementation plan.
+Once aligned on approach, write a detailed phased implementation plan.
 
 Save to `docs/dev/plans/YYYY-MM-DD-description.md`:
 

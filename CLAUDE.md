@@ -34,10 +34,9 @@ Investigate codebase and document findings.
 
 **Process:**
 
-1. Read mentioned files FULLY first (no limit/offset)
-2. Spawn parallel agents (Explore subagent)
-3. Read identified files completely
-4. Document what EXISTS (not what should be)
+1. Read the mentioned files first
+2. Read identified files completely
+3. Document what EXISTS (not what should be)
 
 ### `/plan <what to build>`
 
@@ -47,7 +46,7 @@ Create phased implementation plan.
 
 **Process:**
 
-1. Research current state (spawn agents for modern libraries/patterns)
+1. Research current state, including current libraries and patterns
 2. Get alignment on approach
 3. Define phases with success criteria (automated + manual)
 4. Resolve ALL open questions before finalizing
@@ -103,9 +102,6 @@ cd frontend && bun run test:e2e
 
 ## Important Principles
 
-- **Read files fully** - never use limit/offset
-- **Spawn parallel agents** - maximize efficiency
-- **Use TodoWrite** - track progress
 - **One phase at a time** - verify before continuing
 - **Document decisions** - capture research and plans
 - **Adapt intelligently** - communicate mismatches
